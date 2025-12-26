@@ -10,7 +10,7 @@ import ProjectModal from '../ProjectModal';
 import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
-import { Camera, Image as ImageIcon, Layers, Briefcase } from 'lucide-react';
+import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
@@ -61,7 +61,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     }, [client]);
 
     const { projectGroups, projects, selectProject } = useTaskManager();
-    const { transactions } = useFinance();
+    const { transactions, categories } = useFinance();
     const { tasks: calendarTasks } = useCalendar();
 
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,9 +146,37 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
+    const handleDownloadStatement = () => {
+        const headers = ["Data", "Descricao", "Categoria", "Tipo", "Valor", "Status"];
+        const rows = clientTransactions.map(t => [
+            new Date(t.date).toLocaleDateString('pt-BR'),
+            t.description.replace(/,/g, ''),
+            categories.find(c => c.id === t.categoryId)?.name || 'Outros',
+            t.type.toUpperCase(),
+            t.amount.toString(),
+            t.status.toUpperCase()
+        ]);
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += `EXTRATO FINANCEIRO - ${client.name.toUpperCase()}\n`;
+        csvContent += `GERADO EM: ${new Date().toLocaleString('pt-BR')}\n\n`;
+        csvContent += headers.join(",") + "\n";
+        rows.forEach(row => {
+            csvContent += row.join(",") + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `extrato_${client.name.toLowerCase().replace(/\s/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="h-full flex flex-col animate-fade-in-up">
-            {/* Navigation Header - COMPACT VERSION (UNCHANGED BY USER REQUEST) */}
+            {/* Navigation Header */}
             <div className="flex-shrink-0 mb-4">
                 <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group">
                     <Icons.Back className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -156,7 +184,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                 </button>
             </div>
 
-            {/* Client Header / Hero - COMPACT VERSION (UNCHANGED BY USER REQUEST) */}
+            {/* Client Header / Hero */}
             <div className="flex-shrink-0 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[1.5rem] p-5 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl relative overflow-hidden">
                 <div className="flex items-center gap-5 relative z-10">
                     <div className="relative group/logo">
@@ -210,18 +238,18 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                 
                 {/* --- TAB 1: PERFIL / INTELIGÊNCIA --- */}
                 {activeTab === 'profile' && (
-                    <div className="space-y-10 animate-fade-in">
+                    <div className="space-y-12 animate-fade-in">
                         <div className="flex justify-end">
                             {isEditingProfile ? (
                                 <div className="flex gap-3">
-                                    <button onClick={handleCancelEdit} className="px-4 py-2 text-xs font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
-                                    <button onClick={handleSaveProfile} className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-[0.1em] flex items-center gap-2 shadow-lg transition-all transform active:scale-95">
-                                        <Icons.Save className="w-4 h-4" /> Salvar
+                                    <button onClick={handleCancelEdit} className="px-5 py-2.5 text-sm font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
+                                    <button onClick={handleSaveProfile} className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-[0.1em] flex items-center gap-3 shadow-lg transition-all transform active:scale-95">
+                                        <Icons.Save className="w-5 h-5" /> Salvar Alterações
                                     </button>
                                 </div>
                             ) : (
-                                <button onClick={() => setIsEditingProfile(true)} className="px-5 py-2 bg-[var(--bg-elevation-1)] hover:bg-[var(--bg-elevation-2)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all">
-                                    <Icons.Edit className="w-4 h-4" /> Editar Dossier
+                                <button onClick={() => setIsEditingProfile(true)} className="px-6 py-2.5 bg-[var(--bg-elevation-1)] hover:bg-[var(--bg-elevation-2)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                    <Icons.Edit className="w-5 h-5" /> Iniciar Edição
                                 </button>
                             )}
                         </div>
@@ -230,19 +258,19 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                             <div className="lg:col-span-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 shadow-lg relative overflow-hidden">
                                 <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
                                     <Icons.FingerPrint className="w-8 h-8 text-rose-500" />
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Metadados Corporativos</h3>
+                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Metadados de Conta</h3>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 relative z-10">
-                                    <ReadOnlyOrEdit label="Head do Projeto" value={editedClient.responsibleName} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, responsibleName: v})} />
-                                    <ReadOnlyOrEdit label="CNPJ" value={editedClient.cnpj} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, cnpj: v})} />
-                                    <ReadOnlyOrEdit label="Canal de Email" value={editedClient.email} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, email: v})} icon={<Icons.Mail className="w-5 h-5" />} />
-                                    <ReadOnlyOrEdit label="Linha Direta" value={editedClient.phone} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, phone: v})} />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 relative z-10">
+                                    <ReadOnlyOrEdit label="Gestor do Contrato" value={editedClient.responsibleName} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, responsibleName: v})} />
+                                    <ReadOnlyOrEdit label="Registro Fiscal (CNPJ)" value={editedClient.cnpj} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, cnpj: v})} />
+                                    <ReadOnlyOrEdit label="Canal de Email Principal" value={editedClient.email} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, email: v})} icon={<Icons.Mail className="w-5 h-5" />} />
+                                    <ReadOnlyOrEdit label="Suporte Direto (Tel)" value={editedClient.phone} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, phone: v})} />
                                     
-                                    <div className="md:col-span-2 pt-4">
-                                        <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-4 block opacity-50">Ecosistema Social</label>
+                                    <div className="md:col-span-2 pt-6">
+                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-4 block opacity-50">Ecossistema Social & Web</label>
                                         <div className="flex flex-wrap gap-5">
-                                            <SocialInput icon={<Icons.Globe />} placeholder="Website" value={editedClient.website} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, website: v})} />
+                                            <SocialInput icon={<Icons.Globe />} placeholder="Website Oficial" value={editedClient.website} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, website: v})} />
                                             <SocialInput icon={<Icons.Instagram />} placeholder="Instagram" value={editedClient.socialInstagram} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialInstagram: v})} />
                                             <SocialInput icon={<Icons.Linkedin />} placeholder="LinkedIn" value={editedClient.socialLinkedin} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialLinkedin: v})} />
                                         </div>
@@ -253,36 +281,36 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                             <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 flex flex-col shadow-lg">
                                 <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
                                     <div className="w-3 h-3 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]"></div>
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Core Strategy</h3>
+                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Core Vision</h3>
                                 </div>
                                 
                                 <div className="space-y-10 flex-grow">
                                     <div>
-                                        <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-3 block">North Star Metric</label>
+                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">North Star Metric</label>
                                         {isEditingProfile ? (
                                             <textarea 
                                                 value={editedClient.contractObjective || ''}
                                                 onChange={e => setEditedClient({...editedClient, contractObjective: e.target.value})}
-                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-4 text-sm text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-32 transition-all font-medium"
-                                                placeholder="Qual o principal objetivo?"
+                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-32 transition-all font-medium shadow-inner"
+                                                placeholder="Qual o principal KPI deste contrato?"
                                             />
                                         ) : (
-                                            <p className="text-lg font-medium text-[var(--text-primary)] leading-relaxed italic border-l-4 border-rose-500 pl-4 py-2 bg-rose-500/5 rounded-r-xl">
-                                                "{editedClient.contractObjective || "Objetivo não definido."}"
+                                            <p className="text-xl font-medium text-[var(--text-primary)] leading-relaxed italic border-l-4 border-rose-500 pl-6 py-2 bg-rose-500/5 rounded-r-xl shadow-sm">
+                                                "{editedClient.contractObjective || "Nenhum objetivo central definido."}"
                                             </p>
                                         )}
                                     </div>
                                     <div>
-                                        <label className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-3 block">Notas de Operação</label>
+                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">Notas Estratégicas</label>
                                         {isEditingProfile ? (
                                             <textarea 
                                                 value={editedClient.description || ''}
                                                 onChange={e => setEditedClient({...editedClient, description: e.target.value})}
-                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-4 text-sm text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-40 transition-all font-medium"
+                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-48 transition-all font-medium shadow-inner"
                                             />
                                         ) : (
-                                            <p className="text-sm text-[var(--text-secondary)] leading-relaxed font-medium">
-                                                {editedClient.description || "Sem notas estratégicas vinculadas."}
+                                            <p className="text-base text-[var(--text-secondary)] leading-relaxed font-medium">
+                                                {editedClient.description || "Aguardando definição de contexto operacional."}
                                             </p>
                                         )}
                                     </div>
@@ -290,20 +318,19 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                             </div>
                         </div>
 
-                        {/* DNA DA MARCA - GRID COMPACTO */}
                         <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2.5rem] p-10 shadow-lg">
                              <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
                                 <Icons.Target className="w-8 h-8 text-blue-500" />
-                                <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">DNA & Onboarding Estratégico</h3>
+                                <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Dossier de Onboarding (DNA)</h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                <OnboardingSection label="Tom de Voz" value={editedClient.brand?.toneOfVoice} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('toneOfVoice', v)} placeholder="Ex: Disruptivo..." />
-                                <OnboardingSection label="Identidade Visual" value={editedClient.brand?.visualIdentity} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('visualIdentity', v)} placeholder="Cores, fontes..." />
-                                <OnboardingSection label="Missão & Visão" value={editedClient.brand?.missionVision} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('missionVision', v)} placeholder="Onde quer chegar?" />
-                                <OnboardingSection label="Principais Concorrentes" value={editedClient.brand?.mainCompetitors} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('mainCompetitors', v)} placeholder="Quem são os players?" />
-                                <OnboardingSection label="Diferenciais" value={editedClient.brand?.differentiation} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('differentiation', v)} placeholder="USP da marca..." />
-                                <OnboardingSection label="ICP (Cliente Ideal)" value={editedClient.brand?.idealCustomerProfile} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('idealCustomerProfile', v)} placeholder="Perfil técnico..." />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                <OnboardingSection label="Tom de Voz & Estilo" value={editedClient.brand?.toneOfVoice} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('toneOfVoice', v)} placeholder="Ex: Disruptivo, Sóbrio..." />
+                                <OnboardingSection label="Universo Visual" value={editedClient.brand?.visualIdentity} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('visualIdentity', v)} placeholder="Manual de marca, fontes..." />
+                                <OnboardingSection label="Missão & Propósito" value={editedClient.brand?.missionVision} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('missionVision', v)} placeholder="Onde a marca quer estar em 2 anos?" />
+                                <OnboardingSection label="Benchmarking (Concorrentes)" value={editedClient.brand?.mainCompetitors} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('mainCompetitors', v)} placeholder="Quem são os rivais diretos?" />
+                                <OnboardingSection label="Diferencial Competitive" value={editedClient.brand?.differentiation} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('differentiation', v)} placeholder="Por que o cliente escolhe você?" />
+                                <OnboardingSection label="ICP (Persona Ideal)" value={editedClient.brand?.idealCustomerProfile} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('idealCustomerProfile', v)} placeholder="Perfil técnico do comprador..." />
                             </div>
                         </div>
 
@@ -311,7 +338,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                             <div className="flex items-center justify-between mb-8 border-b border-[var(--border-color)] pb-6">
                                 <div className="flex items-center gap-4">
                                     <Icons.Target className="w-8 h-8 text-emerald-500" />
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Base de Persona (Targeting)</h3>
+                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Diretórios de Persona (Targeting)</h3>
                                 </div>
                             </div>
                             
@@ -334,6 +361,80 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                 {activeTab === 'objectives' && (
                     <div className="animate-fade-in">
                         <ClientObjectivesView client={client} />
+                    </div>
+                )}
+
+                {/* --- TAB 2: FINANCE (RESTORED SUB-VIEW CONTENT) --- */}
+                {activeTab === 'finance' && (
+                    <div className="animate-fade-in space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-emerald-500/50 transition-all">
+                                <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Gross Revenue</p>
+                                <div className="flex items-end justify-between">
+                                    <span className="text-4xl font-black text-emerald-500 tracking-tighter">{formatCurrency(financialSummary.income)}</span>
+                                    <div className="bg-emerald-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                                        <Icons.ArrowUp className="w-6 h-6 text-emerald-500" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-rose-500/50 transition-all">
+                                <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Operative Cost</p>
+                                <div className="flex items-end justify-between">
+                                    <span className="text-4xl font-black text-rose-500 tracking-tighter">{formatCurrency(financialSummary.expense)}</span>
+                                    <div className="bg-rose-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                                        <Icons.ArrowDown className="w-6 h-6 text-rose-500" />
+                                    </div>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setIsTransactionModalOpen(true)}
+                                className="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white rounded-[2rem] shadow-2xl shadow-[var(--accent-glow)] flex flex-col items-center justify-center gap-4 transition-all transform hover:-translate-y-1 active:scale-95 p-8"
+                            >
+                                <Icons.Plus className="w-10 h-10" />
+                                <span className="font-black uppercase tracking-[0.2em] text-xs">Novo Lançamento</span>
+                            </button>
+                        </div>
+
+                        <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border-color)] overflow-hidden shadow-2xl">
+                            <div className="p-8 border-b border-[var(--border-color)] bg-[var(--bg-elevation-1)] flex justify-between items-center">
+                                <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Extrato Analítico</h3>
+                                <button 
+                                    onClick={handleDownloadStatement}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-[var(--bg-elevation-2)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-all shadow-sm"
+                                >
+                                    <Download size={14} />
+                                    <span>Baixar Extrato</span>
+                                </button>
+                            </div>
+                            <div className="divide-y divide-[var(--border-color)]">
+                                {clientTransactions.length > 0 ? clientTransactions.map(t => (
+                                    <div key={t.id} className="flex items-center justify-between p-8 hover:bg-[var(--bg-elevation-1)] transition-all group">
+                                        <div className="flex items-center gap-6">
+                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 flex-shrink-0 transition-all group-hover:scale-110 ${t.type === 'receita' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
+                                                {t.type === 'receita' ? <Icons.ArrowUp className="w-6 h-6" /> : <Icons.ArrowDown className="w-6 h-6" />}
+                                            </div>
+                                            <div>
+                                                <p className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{t.description}</p>
+                                                <div className="flex items-center gap-4 mt-1.5">
+                                                    <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{new Date(t.date).toLocaleDateString()}</span>
+                                                    <span className={`px-2.5 py-1 rounded-full border text-[9px] uppercase font-black tracking-widest ${t.status === 'pago' ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/5' : 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5'}`}>
+                                                        {t.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className={`text-2xl font-black tracking-tighter ${t.type === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                            {t.type === 'receita' ? '+' : '-'}{formatCurrency(t.amount)}
+                                        </span>
+                                    </div>
+                                )) : (
+                                    <div className="p-20 text-center text-[var(--text-muted)] bg-[var(--bg-elevation-1)]/30 flex flex-col items-center">
+                                        <ImageIcon className="w-16 h-16 mb-4 opacity-10" />
+                                        <p className="text-lg font-light italic">Sem lançamentos registrados para esta conta.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -374,7 +475,10 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                             {groupProjects.length > 0 ? groupProjects.map(project => (
-                                                <div key={project.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-8 hover:border-[var(--accent-color)] transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1">
+                                                <div key={project.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-8 hover:border-[var(--accent-color)] transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1 relative overflow-hidden">
+                                                    <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ChevronRight size={24} className="text-rose-500" />
+                                                    </div>
                                                     <div className="flex justify-between items-start mb-6">
                                                         <span className="text-[10px] font-black bg-rose-500/10 px-3 py-1 rounded-full text-rose-500 uppercase tracking-widest border border-rose-500/10">{project.focus}</span>
                                                         <span className="text-xs font-mono font-bold text-[var(--text-muted)]">{new Date(project.deadline).toLocaleDateString()}</span>
