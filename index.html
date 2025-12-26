@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IA Marketing Central</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        /* --- DEFAULT DARK THEME (Red/Black) --- */
+        --bg-main: linear-gradient(160deg, #05010F 0%, #1a0303 100%);
+        --bg-sidebar: rgba(0, 0, 0, 0.4);
+        
+        --bg-card: rgba(30, 30, 45, 0.6); 
+        --bg-elevation-1: #0F0F11; /* Darker backgrounds (columns, inputs) */
+        --bg-elevation-2: #18181b; /* Items (cards, rows) */
+        --bg-card-hover: rgba(255, 255, 255, 0.05);
+        
+        --text-primary: #FFFFFF;
+        --text-secondary: rgba(255, 255, 255, 0.6);
+        --text-muted: rgba(255, 255, 255, 0.4);
+        
+        --border-color: rgba(255, 255, 255, 0.1);
+        --border-hover: rgba(239, 68, 68, 0.5); 
+        
+        --accent-color: #ef4444; 
+        --accent-hover: #dc2626; 
+        --accent-glow: rgba(239, 68, 68, 0.2);
+        
+        --input-bg: rgba(0, 0, 0, 0.4);
+        --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      }
+
+      [data-theme="light"] {
+        /* --- LIGHT THEME (Midnight Blue/Blue) --- */
+        /* Background: Light Blue-Grey Gradient */
+        --bg-main: linear-gradient(160deg, #F1F5F9 0%, #E2E8F0 100%);
+        --bg-sidebar: rgba(255, 255, 255, 0.8);
+        
+        /* Cards: Clean White with Blue-ish tint shadow */
+        --bg-card: #FFFFFF;
+        --bg-elevation-1: #F8FAFC; /* Columns, Inputs */
+        --bg-elevation-2: #FFFFFF; /* Items */
+        --bg-card-hover: #F1F5F9;
+        
+        /* Text: Midnight Blue variations for high contrast */
+        --text-primary: #0F172A; /* Slate 900 */
+        --text-secondary: #475569; /* Slate 600 */
+        --text-muted: #94A3B8; /* Slate 400 */
+        
+        /* Borders: Crisp Slate */
+        --border-color: #CBD5E1;
+        --border-hover: #3B82F6;
+        
+        /* Accent: Bright Royal Blue */
+        --accent-color: #2563EB; /* Blue 600 */
+        --accent-hover: #1D4ED8; /* Blue 700 */
+        --accent-glow: rgba(37, 99, 235, 0.25);
+        
+        --input-bg: #F8FAFC;
+        --shadow-card: 0 4px 20px -5px rgba(37, 99, 235, 0.15); /* Blue-ish shadow */
+      }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        color: var(--text-primary); 
+        overflow: hidden; 
+        background: var(--bg-main);
+        transition: color 0.3s, background 0.3s;
+      }
+
+      /* --- Custom Scrollbar --- */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.05); 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border-color); 
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted); 
+      }
+
+      @keyframes fade-in-up {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.4s ease-out forwards;
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      /* Utility classes for variables */
+      .bg-theme-card { background-color: var(--bg-card); }
+      .bg-theme-elevation-1 { background-color: var(--bg-elevation-1); }
+      .bg-theme-elevation-2 { background-color: var(--bg-elevation-2); }
+      .text-theme-primary { color: var(--text-primary); }
+      .text-theme-secondary { color: var(--text-secondary); }
+      .border-theme { border-color: var(--border-color); }
+      .text-accent { color: var(--accent-color); }
+      .bg-accent { background-color: var(--accent-color); }
+      .shadow-theme { box-shadow: var(--shadow-card); }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "recharts": "https://aistudiocdn.com/recharts@^2.13.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
