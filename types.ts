@@ -36,12 +36,19 @@ export type ClientStatus = 'ACTIVE' | 'PROSPECT' | 'CHURNED';
 export interface ClientPersona {
     name: string;
     description: string;
+    pains?: string;
+    desires?: string;
+    objections?: string;
 }
 
 export interface ClientBrand {
     toneOfVoice: string;
     visualIdentity: string;
     coreValues: string;
+    missionVision?: string;
+    mainCompetitors?: string;
+    differentiation?: string;
+    idealCustomerProfile?: string;
 }
 
 export interface ClientKeyResult {

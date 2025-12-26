@@ -39,32 +39,52 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
         setIsOver(false);
     };
 
+    // Mapeamento de cores de destaque por status
+    const statusColors = {
+        ACTIVE: {
+            border: theme === 'light' ? 'border-emerald-500/40' : 'border-emerald-500/30',
+            glow: 'shadow-[0_0_15px_rgba(16,185,129,0.05)]',
+            indicator: 'bg-emerald-500'
+        },
+        PROSPECT: {
+            border: theme === 'light' ? 'border-blue-500/40' : 'border-blue-500/30',
+            glow: 'shadow-[0_0_15px_rgba(59,130,246,0.05)]',
+            indicator: 'bg-blue-500'
+        },
+        CHURNED: {
+            border: theme === 'light' ? 'border-slate-400/40' : 'border-slate-500/30',
+            glow: 'shadow-[0_0_15px_rgba(100,116,139,0.05)]',
+            indicator: 'bg-slate-400'
+        }
+    }[status];
+
     return (
         <div 
             onDragOver={handleDragOver}
             onDragLeave={() => setIsOver(false)}
             onDrop={handleDrop}
             className={`
-                flex flex-col h-full min-w-[320px] flex-1 rounded-[2rem] transition-all duration-300
+                flex flex-col h-full min-w-[320px] flex-1 rounded-[2.5rem] transition-all duration-500 border-2 backdrop-blur-md
+                ${statusColors.border} ${statusColors.glow}
                 ${theme === 'light' 
-                    ? `bg-slate-100/80 border border-slate-200/50 ${isOver ? 'ring-2 ring-rose-500/20 shadow-inner' : ''}` 
-                    : `bg-[var(--bg-elevation-1)] border border-[var(--border-color)] ${isOver ? 'bg-[var(--bg-card-hover)]' : ''}`
+                    ? `bg-white/40 ${isOver ? 'bg-white/60 ring-4 ring-rose-500/10' : ''}` 
+                    : `bg-white/[0.03] ${isOver ? 'bg-white/[0.08]' : ''}`
                 }
             `}
         >
-            <div className="p-6 flex justify-between items-center">
+            <div className="p-7 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className={`w-2.5 h-2.5 rounded-full shadow-sm ${status === 'ACTIVE' ? 'bg-emerald-500' : status === 'PROSPECT' ? 'bg-blue-500' : 'bg-slate-400'}`}></div>
-                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'light' ? 'text-slate-500' : 'text-[var(--text-muted)]'}`}>
+                    <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${statusColors.indicator} animate-pulse`}></div>
+                    <h3 className={`text-[11px] font-black uppercase tracking-[0.25em] ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
                         {title}
                     </h3>
                 </div>
-                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full border ${theme === 'light' ? 'bg-white text-slate-700 border-slate-200 shadow-sm' : 'bg-[var(--bg-elevation-2)] text-[var(--text-secondary)] border-[var(--border-color)]'}`}>
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${theme === 'light' ? 'bg-white/80 text-slate-700 border-slate-200' : 'bg-black/20 text-slate-400 border-white/5'}`}>
                     {clients.length}
                 </span>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
                 {clients.map(client => (
                     <div 
                         key={client.id}
@@ -72,17 +92,17 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                         onDragStart={(e) => { e.dataTransfer.setData('clientId', client.id); e.dataTransfer.effectAllowed = 'move'; }}
                         onClick={() => onSelectClient(client.id)}
                         className={`
-                            p-6 rounded-3xl transition-all duration-300 cursor-pointer active:scale-95 border
+                            p-6 rounded-[2rem] transition-all duration-300 cursor-pointer active:scale-[0.98] border
                             ${theme === 'light' 
-                                ? 'bg-white border-slate-200 shadow-sm hover:shadow-xl hover:border-rose-500/30' 
-                                : 'bg-[var(--bg-elevation-2)] border-[var(--border-color)] hover:border-[var(--accent-color)] hover:shadow-lg'
+                                ? 'bg-white/80 border-slate-200 shadow-sm hover:shadow-xl hover:border-rose-500/30' 
+                                : 'bg-[#121214] border-white/5 hover:border-[var(--accent-color)] hover:shadow-2xl hover:shadow-black/40'
                             }
                             group relative overflow-hidden
                         `}
                     >
                         <div className="flex items-center gap-4 mb-4">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all
-                                ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-slate-100' : 'bg-[var(--bg-card)] border-[var(--border-color)]'}
+                                ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-slate-100' : 'bg-[var(--bg-card)] border-white/5'}
                             `}>
                                 {client.logo ? <img src={client.logo} className="w-full h-full object-cover rounded-xl" /> : <BuildingIcon className="w-6 h-6" />}
                             </div>
