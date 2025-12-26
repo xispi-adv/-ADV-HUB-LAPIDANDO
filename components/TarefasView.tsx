@@ -1,25 +1,26 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTaskManager } from '../context/TaskManagerContext';
+import { useTheme } from '../context/ThemeContext';
 import TaskBoard from './TaskBoard';
 import TaskModal from './TaskModal';
 import type { Task, TaskStatus } from '../types';
 
 // --- Icons ---
 const ChevronDownIcon: React.FC = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 const LayersIcon: React.FC = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2" />
         <polyline points="2 17 12 22 22 17" />
         <polyline points="2 12 12 17 22 12" />
     </svg>
 );
 const FolderIcon: React.FC = () => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
 );
@@ -43,6 +44,7 @@ interface DropdownProps {
 const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChange, placeholder, icon }) => {
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const { theme } = useTheme();
 
     const selectedOption = options.find(opt => opt.id === value);
 
@@ -60,17 +62,19 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
 
     return (
         <div className="relative" ref={wrapperRef}>
-            <label className="block text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1 ml-1">{label}</label>
+            <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2 ml-1 opacity-70">{label}</label>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all duration-300 min-w-[200px] justify-between
-                    ${isOpen ? 'bg-[var(--bg-card)] border-[var(--accent-color)] text-[var(--text-primary)] shadow-[var(--shadow-card)]' : 'bg-[var(--bg-elevation-1)] border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card)] hover:border-[var(--text-muted)]'}
+                    flex items-center gap-3 px-6 py-3.5 rounded-2xl border transition-all duration-300 min-w-[240px] justify-between
+                    ${isOpen 
+                        ? 'bg-[var(--bg-card)] border-[var(--accent-color)] text-[var(--text-primary)] shadow-2xl' 
+                        : 'bg-[var(--bg-elevation-1)] border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--text-muted)]'}
                 `}
             >
-                <div className="flex items-center gap-2 truncate">
+                <div className="flex items-center gap-3 truncate">
                     {icon && <span className="text-[var(--text-muted)]">{icon}</span>}
-                    <span className={`truncate ${selectedOption ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                    <span className={`truncate text-sm font-bold tracking-tight ${selectedOption ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
                 </div>
@@ -78,8 +82,8 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 top-full left-0 mt-2 w-full min-w-[240px] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-fade-in-up">
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar p-1">
+                <div className="absolute z-50 top-full left-0 mt-3 w-full min-w-[280px] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up backdrop-blur-xl">
+                    <div className="max-h-80 overflow-y-auto custom-scrollbar p-2">
                         {options.length > 0 ? (
                             options.map(option => (
                                 <button
@@ -89,16 +93,18 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
                                         setIsOpen(false);
                                     }}
                                     className={`
-                                        w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between group
-                                        ${value === option.id ? 'bg-[var(--accent-glow)] text-[var(--accent-color)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevation-1)] hover:text-[var(--text-primary)]'}
+                                        w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-between group mb-1 last:mb-0
+                                        ${value === option.id 
+                                            ? 'bg-[var(--accent-color)] text-white' 
+                                            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevation-1)] hover:text-[var(--text-primary)]'}
                                     `}
                                 >
                                     <span>{option.label}</span>
-                                    {value === option.id && <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)]"></div>}
+                                    {value === option.id && <div className="w-2 h-2 rounded-full bg-white shadow-sm"></div>}
                                 </button>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-xs text-[var(--text-muted)] text-center">Sem opções</div>
+                            <div className="px-4 py-6 text-xs text-[var(--text-muted)] text-center font-medium italic">Nenhum registro encontrado</div>
                         )}
                     </div>
                 </div>
@@ -111,14 +117,13 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
 
 const TarefasView: React.FC = () => {
     const { tasks, selectedProjectId, projects, projectGroups, selectProject } = useTaskManager();
+    const { theme } = useTheme();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [newTaskStatus, setNewTaskStatus] = useState<TaskStatus | null>(null);
     
-    // Local state for filtering the Project Dropdown
     const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
-    // Initialize: If a project is globally selected, ensure the Group Dropdown matches it
     useEffect(() => {
         if (selectedProjectId) {
             const project = projects.find(p => p.id === selectedProjectId);
@@ -130,7 +135,6 @@ const TarefasView: React.FC = () => {
 
     const handleGroupChange = (groupId: string) => {
         setActiveGroupId(groupId);
-        // When group changes, reset project selection to prompt user, or select first available
         selectProject(''); 
     };
 
@@ -156,7 +160,6 @@ const TarefasView: React.FC = () => {
         setNewTaskStatus(null);
     };
 
-    // Derived Data
     const filteredProjects = activeGroupId 
         ? projects.filter(p => p.groupId === activeGroupId)
         : [];
@@ -169,20 +172,21 @@ const TarefasView: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col animate-fade-in-up">
-            {/* Header Area - Fixed Height */}
-            <header className="flex-shrink-0 mb-6">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-[var(--border-color)]">
+            <header className="flex-shrink-0 mb-10">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 pb-10 border-b border-[var(--border-color)]">
                     
-                    {/* Title */}
                     <div>
-                        <h1 className="text-3xl font-light text-[var(--text-primary)] tracking-tight">Gestão Ágil</h1>
-                        <p className="text-[var(--text-muted)] text-sm mt-1">Selecione o contexto para visualizar o quadro.</p>
+                        <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                            Gestão Ágil
+                        </h1>
+                        <p className={`text-base mt-2 font-medium ${theme === 'light' ? 'text-slate-500' : 'text-[var(--text-muted)]'}`}>
+                            Selecione o contexto estratégico para orquestrar as frentes de trabalho.
+                        </p>
                     </div>
 
-                    {/* Selectors (The "Breadcrumb" Replacement) */}
-                    <div className="flex flex-wrap items-end gap-4">
+                    <div className="flex flex-wrap items-end gap-6">
                         <DropdownSelect 
-                            label="Grupo de Projetos"
+                            label="Squad / Grupo"
                             placeholder="Selecione o Grupo"
                             options={groupOptions}
                             value={activeGroupId}
@@ -190,17 +194,16 @@ const TarefasView: React.FC = () => {
                             icon={<LayersIcon />}
                         />
 
-                        {/* Divider arrow */}
-                        <div className="hidden md:flex pb-4 text-[var(--text-muted)] opacity-50">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <div className="hidden md:flex pb-5 text-[var(--text-muted)] opacity-30">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                 <path d="M9 18l6-6-6-6" />
                             </svg>
                         </div>
 
-                        <div className={`${!activeGroupId ? 'opacity-50 pointer-events-none' : 'opacity-100'} transition-opacity`}>
+                        <div className={`${!activeGroupId ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'} transition-all duration-500`}>
                             <DropdownSelect 
                                 label="Projeto Ativo"
-                                placeholder={activeGroupId ? "Selecione o Projeto" : "..."}
+                                placeholder={activeGroupId ? "Selecione o Projeto" : "Aguardando grupo..."}
                                 options={projectOptions}
                                 value={selectedProjectId}
                                 onChange={handleProjectChange}
@@ -211,18 +214,19 @@ const TarefasView: React.FC = () => {
                 </div>
             </header>
 
-            {/* Content Area - Flex Grow */}
             <div className="flex-1 min-h-0 flex flex-col">
                 {selectedProjectId && selectedProjectData ? (
                     <>
-                         {/* Project Context Header (Optional, minimal) */}
-                         <div className="flex items-center justify-between mb-4 flex-shrink-0 px-1">
-                            <span className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-widest">
-                                BOARD: {selectedProjectData.name}
-                            </span>
-                             <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                                Online
+                         <div className="flex items-center justify-between mb-6 flex-shrink-0 px-2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)] shadow-[0_0_10px_var(--accent-color)]"></div>
+                                <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-[0.4em]">
+                                    BOARD ATIVO: {selectedProjectData.name}
+                                </span>
+                            </div>
+                             <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Sincronizado
                             </div>
                          </div>
                         
@@ -233,14 +237,13 @@ const TarefasView: React.FC = () => {
                         />
                     </>
                 ) : (
-                    // Empty State
-                    <div className="flex-grow flex flex-col items-center justify-center bg-[var(--bg-card)] border-2 border-dashed border-[var(--border-color)] rounded-2xl animate-fade-in">
-                        <div className="w-16 h-16 bg-[var(--bg-elevation-1)] rounded-full flex items-center justify-center mb-4 text-[var(--text-muted)]">
-                            <FolderIcon />
+                    <div className="flex-grow flex flex-col items-center justify-center bg-black/5 border-2 border-dashed border-[var(--border-color)] rounded-[3rem] animate-fade-in opacity-80">
+                        <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 border border-[var(--border-color)] ${theme === 'light' ? 'bg-white shadow-xl' : 'bg-[var(--bg-elevation-1)]'}`}>
+                            <FolderIcon className="text-[var(--text-muted)] w-10 h-10" />
                         </div>
-                        <h3 className="text-xl font-light text-[var(--text-primary)] mb-2">Nenhum Projeto Selecionado</h3>
-                        <p className="text-[var(--text-muted)] text-center max-w-md">
-                            Utilize os seletores acima para escolher um Grupo e um Projeto para carregar o quadro de tarefas.
+                        <h3 className="text-2xl font-light text-[var(--text-primary)] mb-2 tracking-tight">Nenhum Contexto Selecionado</h3>
+                        <p className="text-[var(--text-secondary)] text-center max-w-sm text-sm leading-relaxed">
+                            Utilize os seletores acima para carregar o workflow e as prioridades do squad.
                         </p>
                     </div>
                 )}
