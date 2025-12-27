@@ -10,7 +10,7 @@ import ProjectModal from '../ProjectModal';
 import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
-import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download } from 'lucide-react';
+import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
@@ -48,7 +48,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
     const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
     const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
-    const [viewingPersonaIndex, setViewingPersonaIndex] = useState<number | null>(null);
+    const [viewingPersonaIndex, setViewingPersonaIndex] = useState<number | 'new' | null>(null);
     
     // --- Edit Mode State for Profile ---
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -126,7 +126,25 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     const handlePersonaChange = (index: number, updatedPersona: ClientPersona) => {
         const newPersonas = [...(editedClient.personas || [])];
         newPersonas[index] = updatedPersona;
+        const updated = { ...editedClient, personas: newPersonas };
+        setEditedClient(updated);
+        updateClient(client.id, { personas: newPersonas });
+    };
+
+    const handleCreatePersona = (newPersona: ClientPersona) => {
+        const newPersonas = [...(editedClient.personas || []), newPersona];
         setEditedClient({ ...editedClient, personas: newPersonas });
+        updateClient(client.id, { personas: newPersonas });
+        setViewingPersonaIndex(null);
+    };
+
+    const handleDeletePersona = (index: number) => {
+        if (confirm("Deseja realmente excluir esta persona?")) {
+            const newPersonas = (editedClient.personas || []).filter((_, i) => i !== index);
+            setEditedClient({ ...editedClient, personas: newPersonas });
+            updateClient(client.id, { personas: newPersonas });
+            setViewingPersonaIndex(null);
+        }
     };
 
     const handleBrandChange = (field: keyof ClientBrand, value: string) => {
@@ -340,18 +358,30 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                                     <Icons.Target className="w-8 h-8 text-emerald-500" />
                                     <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Diretórios de Persona (Targeting)</h3>
                                 </div>
+                                <button 
+                                    onClick={() => setViewingPersonaIndex('new')}
+                                    className="flex items-center gap-2 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg active:scale-95"
+                                >
+                                    <UserPlus size={16} />
+                                    <span>Nova Persona</span>
+                                </button>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {[0, 1, 2].map(index => (
+                                {editedClient.personas?.map((persona, index) => (
                                     <PersonaCard 
                                         key={index}
                                         index={index}
-                                        data={editedClient.personas?.[index] || { name: '', description: '' }}
-                                        isEditing={isEditingProfile}
+                                        data={persona}
                                         onSelect={() => setViewingPersonaIndex(index)}
                                     />
                                 ))}
+                                {(!editedClient.personas || editedClient.personas.length === 0) && (
+                                    <div className="col-span-full py-16 border-2 border-dashed border-[var(--border-color)] rounded-[2.5rem] flex flex-col items-center justify-center text-[var(--text-muted)] opacity-50">
+                                        <UserPlus size={32} className="mb-4" />
+                                        <p>Nenhuma persona mapeada para este cliente.</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -364,7 +394,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                     </div>
                 )}
 
-                {/* --- TAB 2: FINANCE (RESTORED SUB-VIEW CONTENT) --- */}
+                {/* --- TAB 2: FINANCE --- */}
                 {activeTab === 'finance' && (
                     <div className="animate-fade-in space-y-10">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -438,7 +468,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                     </div>
                 )}
 
-                {/* --- TAB 3: PROJECTS (GROUPED BY NUCLEO) --- */}
+                {/* --- TAB 3: PROJECTS --- */}
                 {activeTab === 'projects' && (
                     <div className="animate-fade-in flex flex-col gap-10">
                         <div className="flex justify-between items-center bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] shadow-lg">
@@ -447,10 +477,10 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                                 <p className="text-sm text-[var(--text-muted)] font-medium mt-1">Sincronismo operacional por núcleos de inteligência.</p>
                             </div>
                             <div className="flex gap-4">
-                                <button onClick={() => setIsGroupModalOpen(true)} className="flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-[var(--bg-elevation-1)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-rose-500/40 transition-all">
+                                <button onClick={() => setIsGroupModalOpen(true)} className="flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--bg-elevation-1)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-rose-500/40 transition-all">
                                     <Icons.Folder className="w-5 h-5 opacity-40" /> Novo Núcleo
                                 </button>
-                                <button onClick={() => setIsProjectModalOpen(true)} disabled={!hasGroups} className="flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] shadow-2xl shadow-[var(--accent-glow)] disabled:opacity-50 transition-all">
+                                <button onClick={() => setIsProjectModalOpen(true)} disabled={!hasGroups} className="flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] shadow-2xl shadow-[var(--accent-glow)] disabled:opacity-50 transition-all">
                                     <Icons.Plus className="w-5 h-5" /> Nova Frente
                                 </button>
                             </div>
@@ -548,10 +578,11 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
             {/* PERSONA FULL VIEW/EDIT MODAL */}
             {viewingPersonaIndex !== null && (
                 <PersonaModal 
-                    persona={editedClient.personas?.[viewingPersonaIndex] || { name: '', description: '' }} 
-                    isEditing={isEditingProfile}
-                    onUpdate={(updated) => handlePersonaChange(viewingPersonaIndex, updated)}
-                    onClose={() => setViewingPersonaIndex(null)} 
+                    persona={viewingPersonaIndex === 'new' ? { name: '', description: '' } : editedClient.personas?.[viewingPersonaIndex] || { name: '', description: '' }} 
+                    onUpdate={(updated) => viewingPersonaIndex === 'new' ? handleCreatePersona(updated) : handlePersonaChange(viewingPersonaIndex, updated)}
+                    onDelete={() => typeof viewingPersonaIndex === 'number' && handleDeletePersona(viewingPersonaIndex)}
+                    onClose={() => setViewingPersonaIndex(null)}
+                    isNew={viewingPersonaIndex === 'new'}
                 />
             )}
         </div>
@@ -603,7 +634,7 @@ const SocialInput: React.FC<{icon: React.ReactNode, value: string, isEditing: bo
     );
 }
 
-const PersonaCard: React.FC<{index: number, data: ClientPersona, isEditing: boolean, onSelect: () => void}> = ({ index, data, onSelect }) => {
+const PersonaCard: React.FC<{index: number, data: ClientPersona, onSelect: () => void}> = ({ index, data, onSelect }) => {
     const colors = ['border-rose-500/25', 'border-blue-500/25', 'border-emerald-500/25'];
     const textColors = ['text-rose-500', 'text-blue-500', 'text-emerald-500'];
     const backgrounds = ['bg-rose-500/5', 'bg-blue-500/5', 'bg-emerald-500/5'];
@@ -629,10 +660,20 @@ const PersonaCard: React.FC<{index: number, data: ClientPersona, isEditing: bool
     );
 }
 
-const PersonaModal: React.FC<{ persona: ClientPersona, isEditing: boolean, onUpdate: (p: ClientPersona) => void, onClose: () => void }> = ({ persona, isEditing, onUpdate, onClose }) => {
+const PersonaModal: React.FC<{ persona: ClientPersona, onUpdate: (p: ClientPersona) => void, onDelete: () => void, onClose: () => void, isNew: boolean }> = ({ persona, onUpdate, onDelete, onClose, isNew }) => {
+    const [isEditing, setIsEditing] = useState(isNew);
     const [localPersona, setLocalPersona] = useState(persona);
+
+    useEffect(() => {
+        setLocalPersona(persona);
+    }, [persona]);
+
     const handleChange = (field: keyof ClientPersona, val: string) => setLocalPersona({ ...localPersona, [field]: val });
-    const handleConfirm = () => { onUpdate(localPersona); onClose(); };
+    
+    const handleSave = () => { 
+        onUpdate(localPersona); 
+        setIsEditing(false); 
+    };
 
     return (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center z-[70] animate-fade-in" onClick={onClose}>
@@ -641,9 +682,25 @@ const PersonaModal: React.FC<{ persona: ClientPersona, isEditing: boolean, onUpd
                 <div className="flex justify-between items-start mb-10">
                     <div>
                          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)]">Data Lake / Targeting Profile</span>
-                         <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter uppercase">{isEditing ? 'Configurar Avatar' : 'Arquivo da Persona'}</h2>
+                         <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter uppercase">{isNew ? 'Criar Novo Avatar' : isEditing ? 'Configurar Avatar' : 'Arquivo da Persona'}</h2>
                     </div>
-                    <button onClick={onClose} className="p-3 hover:bg-[var(--bg-elevation-2)] rounded-full text-[var(--text-muted)] transition-colors"><Icons.Close size={24} /></button>
+                    <div className="flex items-center gap-3">
+                         {!isNew && !isEditing ? (
+                             <>
+                                <button onClick={() => setIsEditing(true)} className="p-3 bg-[var(--bg-elevation-1)] border border-[var(--border-color)] text-blue-400 hover:text-blue-300 rounded-xl transition-all" title="Editar">
+                                    <Edit3 size={20} />
+                                </button>
+                                <button onClick={onDelete} className="p-3 bg-[var(--bg-elevation-1)] border border-[var(--border-color)] text-rose-500 hover:text-rose-400 rounded-xl transition-all" title="Excluir">
+                                    <Trash2 size={20} />
+                                </button>
+                             </>
+                         ) : !isNew && isEditing ? (
+                             <button onClick={() => setIsEditing(false)} className="p-3 bg-[var(--bg-elevation-1)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-white rounded-xl transition-all">
+                                 <X size={20} />
+                             </button>
+                         ) : null}
+                         <button onClick={onClose} className="p-3 hover:bg-[var(--bg-elevation-2)] rounded-full text-[var(--text-muted)] transition-colors"><Icons.Close size={24} /></button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 pr-2">
@@ -658,7 +715,14 @@ const PersonaModal: React.FC<{ persona: ClientPersona, isEditing: boolean, onUpd
 
                 {isEditing && (
                     <div className="mt-10 pt-8 border-t border-[var(--border-color)] flex justify-end">
-                        <button onClick={handleConfirm} className="bg-emerald-600 hover:bg-emerald-500 text-white px-10 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.25em] shadow-xl shadow-emerald-900/20 transition-all transform active:scale-95">Sincronizar Arquivo</button>
+                        <button 
+                            onClick={handleSave} 
+                            disabled={!localPersona.name.trim()}
+                            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-5 py-2 rounded-xl text-xs font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                        >
+                            <Icons.Save size={16} />
+                            <span>{isNew ? 'Criar Persona' : 'Salvar Alterações'}</span>
+                        </button>
                     </div>
                 )}
             </div>
