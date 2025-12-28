@@ -95,7 +95,7 @@ export interface ProjectGroup {
   name: string;
   description: string;
   clientId?: string;
-  isPinned?: boolean; // NEW: Pin for groups
+  isPinned?: boolean; 
 }
 
 export interface Project {
@@ -159,13 +159,14 @@ export interface CalendarTask {
   clientId?: string;
 }
 
-export type EmailFolderId = 'inbox' | 'sent' | 'drafts' | 'spam' | 'trash' | string;
+export type EmailFolderId = 'INBOX' | 'SENT' | 'DRAFTS' | 'SPAM' | 'TRASH' | 'IMPORTANT' | string;
 
 export interface EmailFolder {
   id: EmailFolderId;
   name: string;
   unreadCount: number;
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  color?: string;
 }
 
 export interface EmailAttachment {
@@ -178,7 +179,8 @@ export interface EmailAttachment {
 
 export interface Email {
   id: string;
-  folderId: EmailFolderId;
+  threadId: string;
+  labelIds: EmailFolderId[];
   from: {
     name: string;
     email: string;
@@ -186,13 +188,13 @@ export interface Email {
   };
   to: { name: string; email: string }[];
   cc?: { name: string; email: string }[];
-  bcc?: { name: string; email: string }[];
   subject: string;
   snippet: string;
   body: string;
   date: string;
   isRead: boolean;
   attachments: EmailAttachment[];
+  priority?: 'high' | 'normal' | 'low';
 }
 
 export type TransactionType = 'receita' | 'despesa';

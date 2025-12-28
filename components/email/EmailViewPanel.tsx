@@ -1,32 +1,8 @@
-import React from 'react';
-import type { Email } from '../../types';
-import { EmailViewSkeleton } from './skeletons';
 
-const BackIcon: React.FC = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15.41 7.41L14 6L8 12L14 18L15.41 16.59L10.83 12L15.41 7.41Z" fill="currentColor" />
-    </svg>
-);
-const ReplyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-    </svg>
-);
-const ForwardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
-    </svg>
-);
-const TrashIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.134-2.036-2.134H8.716c-1.126 0-2.037.955-2.037 2.134v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-  </svg>
-);
-const AttachmentIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.122 2.122l7.81-7.81" />
-    </svg>
-);
+import React, { useState } from 'react';
+import { useEmail } from '../../context/EmailContext';
+import type { Email } from '../../types';
+import { Sparkles, Reply, Forward, Trash2, ChevronLeft, Paperclip, Loader2 } from 'lucide-react';
 
 interface EmailViewPanelProps {
     email: Email | null;
@@ -34,62 +10,138 @@ interface EmailViewPanelProps {
 }
 
 const EmailViewPanel: React.FC<EmailViewPanelProps> = ({ email, onBack }) => {
+    const { summarizeEmail } = useEmail();
+    const [summary, setSummary] = useState<string | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
+
+    const handleSummarize = async () => {
+        if (!email) return;
+        setIsSummarizing(true);
+        const text = await summarizeEmail(email.id);
+        setSummary(text);
+        setIsSummarizing(false);
+    };
 
     if (!email) {
         return (
-            <div className="h-full flex items-center justify-center text-center text-white/50">
-                <div>
-                    <p className="text-xl font-bold">Selecione um email para ler</p>
-                    <p>O conteúdo do seu email aparecerá aqui.</p>
-                </div>
+            <div className="h-full flex flex-col items-center justify-center text-white/10 select-none animate-fade-in">
+                <Sparkles size={80} strokeWidth={0.5} className="mb-6 opacity-5" />
+                <h3 className="text-xl font-light tracking-widest uppercase">Select Thread</h3>
+                <p className="text-[10px] mt-2 font-black tracking-[0.4em] opacity-30">ADV-HUB PROTOCOL V1.0</p>
             </div>
         );
     }
 
-    const formattedDate = new Date(email.date).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
+    const formattedDate = new Date(email.date).toLocaleString('pt-BR', { 
+        weekday: 'long', 
+        day: 'numeric', 
+        month: 'long',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
 
     return (
-        <div className="h-full flex flex-col">
-            <header className="p-4 flex-shrink-0 border-b border-white/10 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
+        <div className="h-full flex flex-col bg-[var(--bg-main)] animate-fade-in">
+            {/* Header / Actions Bar */}
+            <header className="p-6 border-b border-white/5 flex items-center justify-between backdrop-blur-md sticky top-0 z-20">
+                <div className="flex items-center gap-4 min-w-0">
                     {onBack && (
-                        <button onClick={onBack} className="p-2 -ml-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10 lg:hidden">
-                            <BackIcon />
+                        <button onClick={onBack} className="p-2 -ml-2 text-white/40 hover:text-white lg:hidden">
+                            <ChevronLeft size={20} />
                         </button>
                     )}
-                    <h2 className="text-xl font-semibold text-white/90 line-clamp-1">{email.subject}</h2>
+                    <h2 className="text-xl font-bold text-white tracking-tight truncate pr-4">{email.subject}</h2>
                 </div>
+                
                 <div className="flex items-center gap-2">
-                    <button className="p-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10" title="Responder"><ReplyIcon className="w-5 h-5"/></button>
-                    <button className="p-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10" title="Encaminhar"><ForwardIcon className="w-5 h-5"/></button>
-                    <button className="p-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10" title="Excluir"><TrashIcon className="w-5 h-5"/></button>
+                    <button 
+                        onClick={handleSummarize}
+                        disabled={isSummarizing}
+                        className="flex items-center gap-2 px-4 py-2 bg-rose-600/10 hover:bg-rose-600 border border-rose-500/20 text-rose-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    >
+                        {isSummarizing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                        {summary ? 'Atualizar Resumo' : 'Sumarizar com Alita'}
+                    </button>
+                    <div className="h-6 w-px bg-white/10 mx-2 hidden md:block"></div>
+                    <button className="p-2.5 text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all"><Reply size={18} /></button>
+                    <button className="p-2.5 text-white/40 hover:text-white hover:bg-white/5 rounded-xl transition-all"><Forward size={18} /></button>
+                    <button className="p-2.5 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all"><Trash2 size={18} /></button>
                 </div>
             </header>
-            <div className="p-4 flex-shrink-0 flex items-center gap-4">
-                <img src={email.from.avatar || `https://ui-avatars.com/api/?name=${email.from.name.replace(' ', '+')}&background=B91C1C&color=fff`} alt={email.from.name} className="w-10 h-10 rounded-full" />
-                <div>
-                    <p className="font-semibold text-white">{email.from.name}</p>
-                    <p className="text-sm text-white/70">{email.from.email}</p>
+
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div className="max-w-4xl mx-auto space-y-10">
+                    
+                    {/* Sender Identity */}
+                    <div className="flex items-center gap-4 pb-8 border-b border-white/5">
+                        <img 
+                            src={email.from.avatar || `https://ui-avatars.com/api/?name=${email.from.name.replace(' ', '+')}&background=1F2937&color=fff&bold=true`} 
+                            className="w-12 h-12 rounded-2xl border-2 border-white/5" 
+                            alt={email.from.name} 
+                        />
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline justify-between mb-1">
+                                <h4 className="text-base font-bold text-white">{email.from.name}</h4>
+                                <time className="text-[10px] font-mono text-white/20">{formattedDate}</time>
+                            </div>
+                            <p className="text-xs text-white/40">{email.from.email}</p>
+                        </div>
+                    </div>
+
+                    {/* AI SUMMARY CARD */}
+                    {summary && (
+                        <div className="bg-rose-600/5 border border-rose-500/20 rounded-[2rem] p-8 animate-fade-in-up relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Sparkles size={40} className="text-rose-500" />
+                            </div>
+                            <h3 className="text-[10px] font-black text-rose-500 uppercase tracking-[0.3em] mb-4">Neural Summary by Alita</h3>
+                            <div className="text-sm text-rose-100/80 leading-relaxed whitespace-pre-wrap prose prose-invert max-w-none prose-sm">
+                                {summary}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Email Body */}
+                    <div 
+                        className="text-[15px] leading-relaxed text-white/70 prose prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: email.body }} 
+                    />
+
+                    {/* Attachments Section */}
+                    {email.attachments.length > 0 && (
+                        <div className="pt-10 border-t border-white/5">
+                            <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-4">Anexos Vinculados</h3>
+                            <div className="flex flex-wrap gap-3">
+                                {email.attachments.map(att => (
+                                    <div key={att.id} className="flex items-center gap-3 bg-white/5 border border-white/5 hover:border-white/20 rounded-xl p-3 cursor-pointer transition-all group">
+                                        <div className="p-2 bg-white/5 rounded-lg group-hover:text-rose-500 transition-colors">
+                                            <Paperclip size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-bold text-white truncate">{att.filename}</p>
+                                            <p className="text-[10px] text-white/20">{(att.size / 1024 / 1024).toFixed(2)} MB</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <time className="text-sm text-white/60 ml-auto">{formattedDate}</time>
             </div>
-            <div className="flex-grow overflow-y-auto p-4 prose prose-invert prose-sm max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: email.body }} />
-            </div>
-            {email.attachments.length > 0 && (
-                 <div className="flex-shrink-0 p-4 border-t border-white/10">
-                     <h3 className="text-sm font-semibold text-white/80 mb-2">{email.attachments.length} Anexo(s)</h3>
-                     <div className="flex flex-wrap gap-2">
-                        {email.attachments.map(att => (
-                            <a key={att.id} href={att.url} download className="flex items-center gap-2 bg-black/50 hover:bg-white/10 border border-white/30 rounded-lg px-3 py-2 text-sm text-white/90 transition-colors">
-                                <AttachmentIcon className="w-4 h-4" />
-                                <span>{att.filename}</span>
-                                <span className="text-xs text-white/60">({(att.size / 1024 / 1024).toFixed(2)} MB)</span>
-                            </a>
-                        ))}
-                     </div>
-                 </div>
-            )}
+
+            {/* Quick Reply Bar */}
+            <footer className="p-6 border-t border-white/5 bg-[var(--bg-elevation-1)]">
+                <div className="max-w-4xl mx-auto flex items-center gap-4 bg-black/20 border border-white/5 rounded-2xl p-2 px-4 focus-within:border-rose-500/50 transition-all">
+                    <input 
+                        type="text" 
+                        placeholder="Resposta rápida para este cliente..."
+                        className="flex-1 bg-transparent border-none py-2 text-sm text-white focus:outline-none placeholder-white/20"
+                    />
+                    <button className="bg-white text-black px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">
+                        Enviar
+                    </button>
+                </div>
+            </footer>
         </div>
     );
 };

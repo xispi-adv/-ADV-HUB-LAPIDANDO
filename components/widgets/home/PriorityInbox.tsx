@@ -18,8 +18,9 @@ const ArchiveBoxIcon: React.FC = () => (
 const PriorityInbox: React.FC = () => {
     const { emails, markEmailAsRead, archiveEmail } = useEmail();
 
+    // Fix: Use labelIds.includes('INBOX') instead of non-existent folderId property
     const unreadEmails = emails
-        .filter(e => !e.isRead && e.folderId === 'inbox')
+        .filter(e => !e.isRead && e.labelIds.includes('INBOX'))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5);
 

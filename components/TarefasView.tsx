@@ -61,19 +61,19 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
     }, [wrapperRef]);
 
     return (
-        <div className="relative" ref={wrapperRef}>
-            <label className="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2 ml-1 opacity-70">{label}</label>
+        <div className="relative w-full sm:w-auto" ref={wrapperRef}>
+            <label className="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2 ml-1 opacity-60">{label}</label>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    flex items-center gap-3 px-6 py-3.5 rounded-2xl border transition-all duration-300 min-w-[240px] justify-between
+                    flex items-center gap-3 px-5 py-3 rounded-2xl border transition-all duration-300 w-full sm:min-w-[220px] justify-between
                     ${isOpen 
                         ? 'bg-[var(--bg-card)] border-[var(--accent-color)] text-[var(--text-primary)] shadow-2xl' 
                         : 'bg-[var(--bg-elevation-1)] border-[var(--border-color)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:border-[var(--text-muted)]'}
                 `}
             >
                 <div className="flex items-center gap-3 truncate">
-                    {icon && <span className="text-[var(--text-muted)]">{icon}</span>}
+                    {icon && <span className="text-[var(--text-muted)] opacity-50">{icon}</span>}
                     <span className={`truncate text-sm font-bold tracking-tight ${selectedOption ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
@@ -82,7 +82,7 @@ const DropdownSelect: React.FC<DropdownProps> = ({ label, value, options, onChan
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 top-full left-0 mt-3 w-full min-w-[280px] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up backdrop-blur-xl">
+                <div className="absolute z-50 top-full left-0 mt-3 w-full min-w-[260px] bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up backdrop-blur-xl">
                     <div className="max-h-80 overflow-y-auto custom-scrollbar p-2">
                         {options.length > 0 ? (
                             options.map(option => (
@@ -171,20 +171,20 @@ const TarefasView: React.FC = () => {
     const projectOptions = filteredProjects.map(p => ({ id: p.id, label: p.name }));
 
     return (
-        <div className="h-full flex flex-col animate-fade-in-up">
-            <header className="flex-shrink-0 mb-10">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 pb-10 border-b border-[var(--border-color)]">
+        <div className="h-full flex flex-col animate-fade-in-up px-2 md:px-0">
+            <header className="flex-shrink-0 mb-8">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 pb-8 border-b border-[var(--border-color)]">
                     
-                    <div>
-                        <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
+                    <div className="max-w-2xl">
+                        <h1 className={`text-4xl lg:text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                             Gestão Ágil
                         </h1>
-                        <p className={`text-base mt-2 font-medium ${theme === 'light' ? 'text-slate-500' : 'text-[var(--text-muted)]'}`}>
+                        <p className={`text-sm lg:text-base mt-2 font-medium ${theme === 'light' ? 'text-slate-500' : 'text-[var(--text-muted)]'}`}>
                             Selecione o contexto estratégico para orquestrar as frentes de trabalho.
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap items-end gap-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full xl:w-auto">
                         <DropdownSelect 
                             label="Squad / Grupo"
                             placeholder="Selecione o Grupo"
@@ -194,13 +194,13 @@ const TarefasView: React.FC = () => {
                             icon={<LayersIcon />}
                         />
 
-                        <div className="hidden md:flex pb-5 text-[var(--text-muted)] opacity-30">
+                        <div className="hidden sm:flex self-end mb-4 text-[var(--text-muted)] opacity-30">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                                 <path d="M9 18l6-6-6-6" />
                             </svg>
                         </div>
 
-                        <div className={`${!activeGroupId ? 'opacity-40 pointer-events-none scale-95' : 'opacity-100 scale-100'} transition-all duration-500`}>
+                        <div className={`w-full sm:w-auto transition-all duration-500 ${!activeGroupId ? 'opacity-30 pointer-events-none grayscale' : 'opacity-100 scale-100'}`}>
                             <DropdownSelect 
                                 label="Projeto Ativo"
                                 placeholder={activeGroupId ? "Selecione o Projeto" : "Aguardando grupo..."}

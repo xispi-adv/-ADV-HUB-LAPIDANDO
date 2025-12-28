@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTaskManager } from '../../../context/TaskManagerContext';
 import { useEmail } from '../../../context/EmailContext';
@@ -43,7 +42,8 @@ const DynamicWelcomeHeader: React.FC = () => {
     const today = new Date().toISOString().split('T')[0];
     const tasksDueToday = tasks.filter(task => task.dueDate === today && task.status !== 'CONCLUIDO').length;
     const meetingsToday = calendarTasks.filter(t => t.dueDate === today && t.category === 'REUNIAO').length;
-    const unreadEmails = emails.filter(e => !e.isRead && e.folderId === 'inbox').length;
+    // Fix: Using labelIds.includes('INBOX') instead of non-existent folderId property
+    const unreadEmails = emails.filter(e => !e.isRead && e.labelIds.includes('INBOX')).length;
 
     return (
         <div>

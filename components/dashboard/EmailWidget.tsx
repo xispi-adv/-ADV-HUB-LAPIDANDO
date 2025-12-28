@@ -1,4 +1,3 @@
-
 import React from 'react';
 import WidgetCard from './shared/WidgetCard';
 import { useEmail } from '../../context/EmailContext';
@@ -10,8 +9,9 @@ const EyeIcon: React.FC = () => ( <svg xmlns="http://www.w3.org/2000/svg" fill="
 const EmailWidget: React.FC<{ setActiveView: (view: string) => void }> = ({ setActiveView }) => {
     const { emails, markEmailAsRead } = useEmail();
 
+    // Fix: Using labelIds.includes('INBOX') instead of non-existent folderId property
     const unreadEmails = emails
-        .filter(e => !e.isRead && e.folderId === 'inbox')
+        .filter(e => !e.isRead && e.labelIds.includes('INBOX'))
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 3);
 

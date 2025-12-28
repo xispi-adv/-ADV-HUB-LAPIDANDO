@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Email } from '../../types';
 
@@ -8,31 +9,44 @@ interface EmailListItemProps {
 }
 
 const EmailListItem: React.FC<EmailListItemProps> = ({ email, isSelected, onSelect }) => {
-    const formattedDate = new Date(email.date).toLocaleDateString('pt-BR', {
-        month: 'short',
-        day: 'numeric'
-    });
+    const date = new Date(email.date);
+    const formattedDate = date.getHours() + ":" + String(date.getMinutes()).padStart(2, '0');
 
     return (
         <li
             onClick={onSelect}
-            className={`px-4 py-3 border-b border-white/10 cursor-pointer transition-colors duration-200 relative ${
-                isSelected ? 'bg-red-900/40' : 'hover:bg-white/10'
-            }`}
+            className={`px-6 py-5 border-b border-white/5 cursor-pointer transition-all duration-300 relative group
+                ${isSelected ? 'bg-white/[0.03]' : 'hover:bg-white/[0.01]'}`}
         >
-            {!email.isRead && (
-                <div className="absolute left-1 top-1/2 -translate-y-1/2 w-2 h-2 bg-red-500 rounded-full"></div>
-            )}
-            <div className="flex justify-between items-start mb-1">
-                <p className={`font-semibold truncate pr-4 ${email.isRead ? 'text-white/80' : 'text-white'}`}>
-                    {email.from.name}
-                </p>
-                <time className="text-xs text-white/60 flex-shrink-0">{formattedDate}</time>
+            {/* Active Indicator */}
+            {isSelected && <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-600 shadow-[0_0_15px_#e11d48]"></div>}
+            
+            <div className="flex items-start gap-4">
+                {!email.isRead && <div className="mt-2 w-2 h-2 bg-rose-500 rounded-full flex-shrink-0 animate-pulse"></div>}
+                
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                        <span className={`text-xs font-bold truncate tracking-tight transition-colors ${email.isRead ? 'text-white/40' : 'text-white group-hover:text-rose-400'}`}>
+                            {email.from.name}
+                        </span>
+                        <span className="text-[10px] font-mono text-white/20">{formattedDate}</span>
+                    </div>
+                    
+                    <h4 className={`text-sm truncate mb-1 ${email.isRead ? 'text-white/60 font-normal' : 'text-white font-semibold'}`}>
+                        {email.subject}
+                    </h4>
+                    
+                    <p className="text-xs text-white/30 truncate leading-relaxed">
+                        {email.snippet}
+                    </p>
+                </div>
             </div>
-            <p className={`text-sm truncate ${email.isRead ? 'text-white/80 font-normal' : 'text-white font-semibold'}`}>
-                {email.subject}
-            </p>
-            <p className="text-sm text-white/60 truncate mt-1">{email.snippet}</p>
+            
+            {email.priority === 'high' && (
+                <div className="absolute top-2 right-2">
+                    <div className="w-1 h-1 bg-rose-500 rounded-full"></div>
+                </div>
+            )}
         </li>
     );
 };
