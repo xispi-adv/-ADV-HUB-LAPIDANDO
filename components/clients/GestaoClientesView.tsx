@@ -152,7 +152,7 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredClients = useMemo(() => {
-        if (!searchQuery.trim()) return clients;
+        if (!searchQuery) return clients;
         const query = searchQuery.toLowerCase();
         return clients.filter(c => 
             c.name.toLowerCase().includes(query) || 
@@ -180,7 +180,6 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                    {/* Barra de Pesquisa com Ícone Visível */}
                     <div className="relative w-full sm:w-80 group">
                         <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all group-focus-within:scale-110 ${theme === 'light' ? 'text-slate-600' : 'text-white/30'}`}>
                             <Search size={18} strokeWidth={2.5} />
@@ -190,19 +189,10 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar cliente..."
-                            className={`
-                                w-full pl-11 pr-10 py-3.5 rounded-2xl border text-sm transition-all outline-none font-medium
-                                ${theme === 'light' 
-                                    ? 'bg-white border-slate-200 focus:bg-white focus:border-blue-500 shadow-sm text-slate-900 placeholder-slate-400' 
-                                    : 'bg-[var(--bg-elevation-1)] border-white/10 focus:border-[var(--accent-color)] text-white placeholder-white/20 shadow-inner'
-                                }
-                            `}
+                            className={`w-full pl-11 pr-10 py-3.5 rounded-2xl border text-sm transition-all outline-none font-medium ${theme === 'light' ? 'bg-white border-slate-200 focus:border-blue-500 text-slate-900 placeholder-slate-400' : 'bg-[var(--bg-elevation-1)] border-white/10 focus:border-[var(--accent-color)] text-white placeholder-white/20'}`}
                         />
                         {searchQuery && (
-                            <button 
-                                onClick={() => setSearchQuery('')}
-                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
-                            >
+                            <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 pr-4 flex items-center text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                                 <X size={16} />
                             </button>
                         )}
@@ -218,7 +208,6 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
                 </div>
             </header>
 
-            {/* Container das Colunas: flex-1 e min-h-0 para garantir que usem o espaço vertical até o limite inferior */}
             <div className="flex-1 min-h-0 flex gap-8 overflow-x-auto pb-2 custom-scrollbar pr-1">
                 <ClientColumn title="Contratos Ativos" status="ACTIVE" clients={filteredClients.filter(c => c.status === 'ACTIVE')} onSelectClient={setSelectedClientId} />
                 <ClientColumn title="Em Negociação" status="PROSPECT" clients={filteredClients.filter(c => c.status === 'PROSPECT')} onSelectClient={setSelectedClientId} />
