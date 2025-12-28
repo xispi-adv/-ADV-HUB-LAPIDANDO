@@ -39,21 +39,20 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
         setIsOver(false);
     };
 
-    // Mapeamento de cores de destaque por status
     const statusColors = {
         ACTIVE: {
-            border: theme === 'light' ? 'border-emerald-500/40' : 'border-emerald-500/30',
-            glow: 'shadow-[0_0_15px_rgba(16,185,129,0.05)]',
+            border: theme === 'light' ? 'border-emerald-500/20' : 'border-emerald-500/30',
+            glow: theme === 'light' ? 'shadow-sm' : 'shadow-[0_0_15px_rgba(16,185,129,0.05)]',
             indicator: 'bg-emerald-500'
         },
         PROSPECT: {
-            border: theme === 'light' ? 'border-blue-500/40' : 'border-blue-500/30',
-            glow: 'shadow-[0_0_15px_rgba(59,130,246,0.05)]',
+            border: theme === 'light' ? 'border-blue-500/20' : 'border-blue-500/30',
+            glow: theme === 'light' ? 'shadow-sm' : 'shadow-[0_0_15px_rgba(59,130,246,0.05)]',
             indicator: 'bg-blue-500'
         },
         CHURNED: {
-            border: theme === 'light' ? 'border-slate-400/40' : 'border-slate-500/30',
-            glow: 'shadow-[0_0_15px_rgba(100,116,139,0.05)]',
+            border: theme === 'light' ? 'border-slate-400/20' : 'border-slate-500/30',
+            glow: theme === 'light' ? 'shadow-sm' : 'shadow-[0_0_15px_rgba(100,116,139,0.05)]',
             indicator: 'bg-slate-400'
         }
     }[status];
@@ -64,10 +63,10 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
             onDragLeave={() => setIsOver(false)}
             onDrop={handleDrop}
             className={`
-                flex flex-col h-full min-w-[320px] flex-1 rounded-[2.5rem] transition-all duration-500 border-2 backdrop-blur-md
+                flex flex-col h-full min-w-[340px] flex-1 rounded-[2.5rem] transition-all duration-500 border backdrop-blur-xl
                 ${statusColors.border} ${statusColors.glow}
                 ${theme === 'light' 
-                    ? `bg-white/40 ${isOver ? 'bg-white/60 ring-4 ring-rose-500/10' : ''}` 
+                    ? `bg-white/40 ${isOver ? 'bg-white/70 ring-4 ring-blue-500/5' : ''}` 
                     : `bg-white/[0.03] ${isOver ? 'bg-white/[0.08]' : ''}`
                 }
             `}
@@ -92,9 +91,9 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                         onDragStart={(e) => { e.dataTransfer.setData('clientId', client.id); e.dataTransfer.effectAllowed = 'move'; }}
                         onClick={() => onSelectClient(client.id)}
                         className={`
-                            p-6 rounded-[2rem] transition-all duration-300 cursor-pointer active:scale-[0.98] border
+                            p-6 rounded-[2rem] transition-all duration-300 cursor-pointer active:scale-[0.98] border backdrop-blur-md
                             ${theme === 'light' 
-                                ? 'bg-white/80 border-slate-200 shadow-sm hover:shadow-xl hover:border-rose-500/30' 
+                                ? 'bg-white/60 border-white/80 shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-xl hover:border-blue-500/20 hover:bg-white/90' 
                                 : 'bg-[#121214] border-white/5 hover:border-[var(--accent-color)] hover:shadow-2xl hover:shadow-black/40'
                             }
                             group relative overflow-hidden
@@ -102,7 +101,7 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                     >
                         <div className="flex items-center gap-4 mb-4">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all
-                                ${theme === 'light' ? 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-slate-100' : 'bg-[var(--bg-card)] border-white/5'}
+                                ${theme === 'light' ? 'bg-white border-slate-100 text-slate-400 group-hover:shadow-sm' : 'bg-[var(--bg-card)] border-white/5'}
                             `}>
                                 {client.logo ? <img src={client.logo} className="w-full h-full object-cover rounded-xl" /> : <BuildingIcon className="w-6 h-6" />}
                             </div>
@@ -112,20 +111,20 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                             </div>
                         </div>
                         
-                        <p className={`text-xs leading-relaxed line-clamp-2 mb-6 ${theme === 'light' ? 'text-slate-600' : 'text-[var(--text-secondary)]'}`}>
+                        <p className={`text-xs leading-relaxed line-clamp-2 mb-6 ${theme === 'light' ? 'text-slate-600 font-medium' : 'text-[var(--text-secondary)]'}`}>
                             {client.description || 'Defina um contexto estratégico para esta conta.'}
                         </p>
                         
-                        <div className={`flex justify-between items-center pt-4 border-t ${theme === 'light' ? 'border-slate-50' : 'border-white/5'}`}>
+                        <div className={`flex justify-between items-center pt-4 border-t ${theme === 'light' ? 'border-slate-100' : 'border-white/5'}`}>
                              <span className={`text-[10px] font-bold ${theme === 'light' ? 'text-slate-400' : 'text-[var(--text-muted)]'}`}>
                                 DESDE {new Date(client.since).getFullYear()}
                             </span>
                             <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full
                                 ${status === 'ACTIVE' 
-                                    ? (theme === 'light' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : 'bg-emerald-500/10 text-emerald-500')
+                                    ? (theme === 'light' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-emerald-500/10 text-emerald-500')
                                     : status === 'PROSPECT'
-                                    ? (theme === 'light' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-blue-500/10 text-blue-500')
-                                    : (theme === 'light' ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-gray-500/10 text-gray-500')
+                                    ? (theme === 'light' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-blue-500/10 text-blue-500')
+                                    : (theme === 'light' ? 'bg-slate-50 text-slate-500 border border-slate-100' : 'bg-gray-500/10 text-gray-500')
                                 }
                             `}>
                                 {status === 'ACTIVE' ? 'Ativo' : status === 'PROSPECT' ? 'Negociação' : 'Churn'}
@@ -151,8 +150,8 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
     }
 
     return (
-        <div className={`h-full flex flex-col animate-fade-in-up ${theme === 'light' ? 'bg-slate-50 -m-10 p-10' : ''}`}>
-            <header className="flex-shrink-0 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className={`h-full flex flex-col animate-fade-in-up`}>
+            <header className="flex-shrink-0 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-10 border-b border-[var(--border-color)]">
                 <div>
                     <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                         Gestão de Clientes
@@ -163,14 +162,14 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
                 </div>
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-[var(--accent-color)] text-white px-8 py-3 rounded-2xl hover:bg-[var(--accent-hover)] transition-all flex items-center gap-3 shadow-xl shadow-[var(--accent-glow)] transform active:scale-95"
+                    className="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl hover:bg-[var(--accent-hover)] transition-all flex items-center gap-3 shadow-xl shadow-[var(--accent-glow)] transform active:scale-95"
                 >
-                    <PlusIcon className="w-6 h-6" />
+                    <PlusIcon className="w-5 h-5" />
                     <span className="font-bold uppercase tracking-widest text-sm">Novo Cliente</span>
                 </button>
             </header>
 
-            <div className="flex-1 min-h-0 flex gap-8 overflow-x-auto pb-10 custom-scrollbar">
+            <div className="flex-1 min-h-0 flex gap-8 overflow-x-auto pb-10 custom-scrollbar pr-2">
                 <ClientColumn title="Contratos Ativos" status="ACTIVE" clients={clients.filter(c => c.status === 'ACTIVE')} onSelectClient={setSelectedClientId} />
                 <ClientColumn title="Em Negociação" status="PROSPECT" clients={clients.filter(c => c.status === 'PROSPECT')} onSelectClient={setSelectedClientId} />
                 <ClientColumn title="Finalizados" status="CHURNED" clients={clients.filter(c => c.status === 'CHURNED')} onSelectClient={setSelectedClientId} />
