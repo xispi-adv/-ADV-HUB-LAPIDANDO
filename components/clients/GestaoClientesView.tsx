@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import type { Client, ClientStatus } from '../../types';
 import ClientDetailsView from './ClientDetailsView';
 import ClientModal from './ClientModal';
+import { Search, X } from 'lucide-react';
 
 // Icons
 const BuildingIcon = (props: any) => (
@@ -63,7 +64,7 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
             onDragLeave={() => setIsOver(false)}
             onDrop={handleDrop}
             className={`
-                flex flex-col h-full min-w-[340px] flex-1 rounded-[2.5rem] transition-all duration-500 border backdrop-blur-xl
+                flex flex-col h-full min-w-[340px] flex-1 rounded-[2.5rem] transition-all duration-500 border backdrop-blur-xl overflow-hidden
                 ${statusColors.border} ${statusColors.glow}
                 ${theme === 'light' 
                     ? `bg-white/40 ${isOver ? 'bg-white/70 ring-4 ring-blue-500/5' : ''}` 
@@ -71,7 +72,7 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                 }
             `}
         >
-            <div className="p-7 flex justify-between items-center">
+            <div className="p-7 flex justify-between items-center flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <div className={`w-2.5 h-2.5 rounded-full shadow-lg ${statusColors.indicator} animate-pulse`}></div>
                     <h3 className={`text-[11px] font-black uppercase tracking-[0.25em] ${theme === 'light' ? 'text-slate-600' : 'text-slate-300'}`}>
@@ -93,7 +94,7 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                         className={`
                             p-6 rounded-[2rem] transition-all duration-300 cursor-pointer active:scale-[0.98] border backdrop-blur-md
                             ${theme === 'light' 
-                                ? 'bg-white/60 border-white/80 shadow-[0_4px_12px_rgba(0,0,0,0.03)] hover:shadow-xl hover:border-blue-500/20 hover:bg-white/90' 
+                                ? 'bg-white/70 border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-xl hover:border-blue-500/20 hover:bg-white' 
                                 : 'bg-[#121214] border-white/5 hover:border-[var(--accent-color)] hover:shadow-2xl hover:shadow-black/40'
                             }
                             group relative overflow-hidden
@@ -132,6 +133,12 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
                         </div>
                     </div>
                 ))}
+                {clients.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-10 opacity-20 h-full">
+                        <Search size={40} className="mb-2" />
+                        <p className="text-xs font-bold uppercase tracking-widest">Nenhum resultado</p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -142,6 +149,17 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
     const { theme } = useTheme();
     const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredClients = useMemo(() => {
+        if (!searchQuery.trim()) return clients;
+        const query = searchQuery.toLowerCase();
+        return clients.filter(c => 
+            c.name.toLowerCase().includes(query) || 
+            c.companyName?.toLowerCase().includes(query) ||
+            c.description?.toLowerCase().includes(query)
+        );
+    }, [clients, searchQuery]);
 
     const selectedClient = useMemo(() => clients.find(c => c.id === selectedClientId) || null, [clients, selectedClientId]);
 
@@ -150,7 +168,7 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
     }
 
     return (
-        <div className={`h-full flex flex-col animate-fade-in-up`}>
+        <div className="flex-1 flex flex-col animate-fade-in-up h-full overflow-hidden">
             <header className="flex-shrink-0 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-10 border-b border-[var(--border-color)]">
                 <div>
                     <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
@@ -160,19 +178,51 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
                         Mapeamento 360º de parcerias e fluxo comercial.
                     </p>
                 </div>
-                <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl hover:bg-[var(--accent-hover)] transition-all flex items-center gap-3 shadow-xl shadow-[var(--accent-glow)] transform active:scale-95"
-                >
-                    <PlusIcon className="w-5 h-5" />
-                    <span className="font-bold uppercase tracking-widest text-sm">Novo Cliente</span>
-                </button>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    {/* Barra de Pesquisa com Ícone Visível */}
+                    <div className="relative w-full sm:w-80 group">
+                        <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-all group-focus-within:scale-110 ${theme === 'light' ? 'text-slate-600' : 'text-white/30'}`}>
+                            <Search size={18} strokeWidth={2.5} />
+                        </div>
+                        <input 
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Pesquisar cliente..."
+                            className={`
+                                w-full pl-11 pr-10 py-3.5 rounded-2xl border text-sm transition-all outline-none font-medium
+                                ${theme === 'light' 
+                                    ? 'bg-white border-slate-200 focus:bg-white focus:border-blue-500 shadow-sm text-slate-900 placeholder-slate-400' 
+                                    : 'bg-[var(--bg-elevation-1)] border-white/10 focus:border-[var(--accent-color)] text-white placeholder-white/20 shadow-inner'
+                                }
+                            `}
+                        />
+                        {searchQuery && (
+                            <button 
+                                onClick={() => setSearchQuery('')}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        )}
+                    </div>
+
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="w-full sm:w-auto bg-[var(--accent-color)] text-white px-8 py-3.5 rounded-2xl hover:bg-[var(--accent-hover)] transition-all flex items-center justify-center gap-3 shadow-xl shadow-[var(--accent-glow)] transform active:scale-95 whitespace-nowrap"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                        <span className="font-bold uppercase tracking-widest text-sm">Novo Cliente</span>
+                    </button>
+                </div>
             </header>
 
-            <div className="flex-1 min-h-0 flex gap-8 overflow-x-auto pb-10 custom-scrollbar pr-2">
-                <ClientColumn title="Contratos Ativos" status="ACTIVE" clients={clients.filter(c => c.status === 'ACTIVE')} onSelectClient={setSelectedClientId} />
-                <ClientColumn title="Em Negociação" status="PROSPECT" clients={clients.filter(c => c.status === 'PROSPECT')} onSelectClient={setSelectedClientId} />
-                <ClientColumn title="Finalizados" status="CHURNED" clients={clients.filter(c => c.status === 'CHURNED')} onSelectClient={setSelectedClientId} />
+            {/* Container das Colunas: flex-1 e min-h-0 para garantir que usem o espaço vertical até o limite inferior */}
+            <div className="flex-1 min-h-0 flex gap-8 overflow-x-auto pb-2 custom-scrollbar pr-1">
+                <ClientColumn title="Contratos Ativos" status="ACTIVE" clients={filteredClients.filter(c => c.status === 'ACTIVE')} onSelectClient={setSelectedClientId} />
+                <ClientColumn title="Em Negociação" status="PROSPECT" clients={filteredClients.filter(c => c.status === 'PROSPECT')} onSelectClient={setSelectedClientId} />
+                <ClientColumn title="Finalizados" status="CHURNED" clients={filteredClients.filter(c => c.status === 'CHURNED')} onSelectClient={setSelectedClientId} />
             </div>
 
             {isModalOpen && <ClientModal onClose={() => setIsModalOpen(false)} />}
