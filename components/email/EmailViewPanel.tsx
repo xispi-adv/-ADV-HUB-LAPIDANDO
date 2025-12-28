@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEmail } from '../../context/EmailContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Email } from '../../types';
-import { Sparkles, Reply, Forward, Trash2, ChevronLeft, Paperclip, Loader2 } from 'lucide-react';
+import { Sparkles, Reply, Forward, Trash2, ChevronLeft, Paperclip, Loader2, Send, X } from 'lucide-react';
 
 interface EmailViewPanelProps {
     email: Email | null;
@@ -15,6 +15,11 @@ const EmailViewPanel: React.FC<EmailViewPanelProps> = ({ email, onBack }) => {
     const { theme } = useTheme();
     const [summary, setSummary] = useState<string | null>(null);
     const [isSummarizing, setIsSummarizing] = useState(false);
+    
+    // Quick Reply States
+    const [replyText, setReplyText] = useState('');
+    const [replyAttachments, setReplyAttachments] = useState<File[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSummarize = async () => {
         if (!email) return;
@@ -22,6 +27,16 @@ const EmailViewPanel: React.FC<EmailViewPanelProps> = ({ email, onBack }) => {
         const text = await summarizeEmail(email.id);
         setSummary(text);
         setIsSummarizing(false);
+    };
+
+    const handleFileAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setReplyAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const removeReplyAttachment = (index: number) => {
+        setReplyAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
     if (!email) {
@@ -140,22 +155,53 @@ const EmailViewPanel: React.FC<EmailViewPanelProps> = ({ email, onBack }) => {
                 </div>
             </div>
 
-            {/* Quick Reply Bar */}
+            {/* Quick Reply Bar - Enhanced with Attachments */}
             <footer className={`p-6 border-t ${theme === 'light' ? 'bg-slate-50 border-slate-200' : 'bg-black/20 border-white/5'}`}>
-                <div className={`max-w-4xl mx-auto flex items-center gap-4 border rounded-2xl p-2 px-4 transition-all
-                    ${theme === 'light' 
-                        ? 'bg-white border-slate-300 focus-within:border-blue-500 shadow-sm' 
-                        : 'bg-black/40 border-white/10 focus-within:border-rose-500/50'}`}>
-                    <input 
-                        type="text" 
-                        placeholder="Resposta rápida..."
-                        className={`flex-1 bg-transparent border-none py-2 text-sm focus:outline-none 
-                            ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/20'}`}
-                    />
-                    <button className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-                        ${theme === 'light' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-black hover:bg-rose-500 hover:text-white'}`}>
-                        Enviar
-                    </button>
+                <div className="max-w-4xl mx-auto space-y-4">
+                    {/* Reply Attachments Queue */}
+                    {replyAttachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 animate-fade-in-up">
+                            {replyAttachments.map((file, i) => (
+                                <div key={i} className={`flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-bold border
+                                    ${theme === 'light' ? 'bg-white border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}>
+                                    <span className="truncate max-w-[100px]">{file.name}</span>
+                                    <button onClick={() => removeReplyAttachment(i)} className="hover:text-red-500 transition-colors">
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className={`flex items-center gap-4 border rounded-2xl p-2 px-4 transition-all
+                        ${theme === 'light' 
+                            ? 'bg-white border-slate-300 focus-within:border-blue-500 shadow-sm' 
+                            : 'bg-black/40 border-white/10 focus-within:border-rose-500/50'}`}>
+                        
+                        <button 
+                            type="button" 
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`p-2 rounded-xl transition-all ${theme === 'light' ? 'text-slate-400 hover:bg-slate-100 hover:text-blue-600' : 'text-white/30 hover:bg-white/5 hover:text-rose-500'}`}
+                        >
+                            <Paperclip size={18} />
+                        </button>
+                        <input type="file" ref={fileInputRef} onChange={handleFileAttach} multiple className="hidden" />
+
+                        <input 
+                            type="text" 
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value)}
+                            placeholder="Resposta rápida..."
+                            className={`flex-1 bg-transparent border-none py-2 text-sm focus:outline-none 
+                                ${theme === 'light' ? 'text-slate-900 placeholder-slate-400' : 'text-white placeholder-white/20'}`}
+                        />
+                        
+                        <button className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2
+                            ${theme === 'light' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-black hover:bg-rose-500 hover:text-white'}`}>
+                            <Send size={14} />
+                            <span>Enviar</span>
+                        </button>
+                    </div>
                 </div>
             </footer>
         </div>
