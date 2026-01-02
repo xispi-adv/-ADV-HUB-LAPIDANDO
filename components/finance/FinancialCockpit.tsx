@@ -1,174 +1,274 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import WidgetCard from '../dashboard/shared/WidgetCard';
-import { FinanceDonutChart } from './FinanceCharts';
+import { FinanceRadarChart, FinanceTrendChart } from './FinanceCharts';
+import { Sparkles, ArrowUpRight, ArrowDownLeft, Wallet, BarChart3, ChevronRight, Info, Calendar, TrendingUp, Layers, Activity } from 'lucide-react';
 
-// Icons
-const ArrowUpRightIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-    </svg>
-);
+const AI_TIPS = [
+    { title: "Sincronia de Caixa", text: "Alita detectou que suas entradas costumam ser maiores às terças. Ajuste vencimentos de boletos para este dia.", action: "Otimizar Ciclo" },
+    { title: "Dreno SaaS", text: "Identificamos 3 assinaturas com baixo uso nos últimos 30 dias. Economia potencial: R$ 450/mês.", action: "Verificar Contas" },
+    { title: "Poder de Lucro", text: "Sua margem de sobra subiu 12%. Recomendamos investir mais em 'Tráfego Pago' para escalar.", action: "Aumentar Escala" },
+    { title: "Alerta de Risco", text: "Projeção mostra saldo negativo em 15 dias caso seus gastos atuais continuem nesse ritmo.", action: "Ver Projeção" }
+];
 
-const ArrowDownLeftIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25" />
-    </svg>
-);
+const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onRequestAuditor }) => {
+  const { transactions, categories, accounts } = useFinance();
+  const [currentTip, setCurrentTip] = useState(0);
 
-const SparklesIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-    </svg>
-);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-interface FinancialCockpitProps {
-    onRequestAuditor?: () => void;
-}
-
-const FinancialCockpit: React.FC<FinancialCockpitProps> = ({ onRequestAuditor }) => {
-  const { accounts, transactions, categories } = useFinance();
-
-  const totalBalance = useMemo(() => accounts.reduce((acc, curr) => acc + curr.balance, 0), [accounts]);
-  
-  const recentTransactions = useMemo(() => {
-      return [...transactions]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 3);
+  useEffect(() => {
+    if (transactions.length > 0) {
+        const sortedDates = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setStartDate(sortedDates[0].date);
+        setEndDate(sortedDates[sortedDates.length - 1].date);
+    } else {
+        const now = new Date();
+        setStartDate(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]);
+        setEndDate(now.toISOString().split('T')[0]);
+    }
   }, [transactions]);
 
-  const topExpensesData = useMemo(() => {
-    const expenseMap = new Map<string, number>();
-    transactions.filter(t => t.type === 'despesa').forEach(t => {
-        const catName = categories.find(c => c.id === t.categoryId)?.name || 'Outros';
-        expenseMap.set(catName, (expenseMap.get(catName) || 0) + t.amount);
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTip(prev => (prev + 1) % AI_TIPS.length), 8000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const financialSummary = useMemo(() => {
+    const income = transactions.filter(t => t.type === 'receita' && t.status === 'pago').reduce((acc, t) => acc + t.amount, 0);
+    const expense = transactions.filter(t => t.type === 'despesa' && t.status === 'pago').reduce((acc, t) => acc + t.amount, 0);
+    const totalBalance = accounts.reduce((a, b) => a + b.balance, 0);
+    return { income, expense, balance: totalBalance };
+  }, [transactions, accounts]);
+
+  const recentTransactions = useMemo(() => {
+      return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4);
+  }, [transactions]);
+
+  const analyticsData = useMemo(() => {
+    if (!startDate || !endDate) return { trendData: [], daysInRange: 0, metrics: null, categoryData: [] };
+
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T23:59:59');
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 || 1;
+
+    const trendData: { label: string, revenue: number, expense: number }[] = [];
+    const allocationMap = new Map<string, number>();
+
+    for (let i = 0; i < daysInRange; i++) {
+        const currentLoopDate = new Date(start);
+        currentLoopDate.setDate(start.getDate() + i);
+        const dateStr = currentLoopDate.toISOString().split('T')[0];
+        const dayT = transactions.filter(t => t.date === dateStr);
+        trendData.push({
+            label: currentLoopDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'}),
+            revenue: dayT.filter(t => t.type === 'receita').reduce((a, b) => a + b.amount, 0),
+            expense: dayT.filter(t => t.type === 'despesa').reduce((a, b) => a + b.amount, 0)
+        });
+    }
+
+    const periodTransactions = transactions.filter(t => {
+        const td = new Date(t.date + 'T00:00:00');
+        return td >= start && td <= end;
     });
+
+    const totalPeriodExpense = periodTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0) || 1;
     
-    const sorted = Array.from(expenseMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4);
-    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981']; // Red, Yellow, Blue, Green
+    categories.filter(c => c.type === 'despesa').forEach(cat => {
+        const catTotal = periodTransactions.filter(t => t.categoryId === cat.id).reduce((acc, t) => acc + t.amount, 0);
+        if (catTotal > 0) allocationMap.set(cat.name, catTotal);
+    });
+
+    const categoryData = Array.from(allocationMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, amount]) => ({
+            id: categories.find(c => c.name === name)?.id || name,
+            name: name.toUpperCase(),
+            amount,
+            percentage: Math.round((amount / totalPeriodExpense) * 100)
+        }));
+
+    const totalIncome = financialSummary.income || 1;
+    const totalExpense = financialSummary.expense || 1;
+    const margin = Math.max(0, ((totalIncome - totalExpense) / totalIncome) * 100);
     
-    return sorted.map(([label, value], index) => ({
-        label,
-        value,
-        color: colors[index % colors.length]
-    }));
-  }, [transactions, categories]);
+    const metrics = {
+        profitMargin: Math.min(100, margin * 1.5),
+        retention: 85,
+        roi: 72,
+        liquidity: Math.min(100, (financialSummary.balance / totalExpense) * 20),
+        taxEfficiency: 90,
+        growthMoM: 65,
+        fixedCosts: Math.min(100, 100 - (totalExpense / totalIncome) * 50),
+        inboundFlow: Math.min(100, (totalIncome / 20000) * 100),
+        burnRate: Math.max(0, 100 - (totalExpense / financialSummary.balance) * 100),
+        investment: 40,
+        cashHealth: Math.min(100, (financialSummary.balance / 10000) * 100)
+    };
+
+    return { trendData, daysInRange, metrics, categoryData };
+  }, [transactions, categories, financialSummary, startDate, endDate]);
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: 'numeric', year: 'numeric' });
 
   return (
-    <div className="space-y-6 pb-6">
-        {/* Top Level Metrics Row */}
+    <div className="space-y-6 pb-20">
+        {/* Row 1: Hero KPIs */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Card 1: Total Balance (Existing) */}
-            <WidgetCard className="relative overflow-hidden group flex flex-col justify-center min-h-[180px]">
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <svg className="w-20 h-20 text-[var(--accent-color)]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39h-2.07c-.11-.92-.76-1.63-2.1-1.63-1.8 0-2.2.75-2.2 1.52 0 .73.84 1.22 2.67 1.66 2.51.6 4.18 1.75 4.18 3.71 0 1.77-1.39 2.95-3.27 3.27z"/></svg>
+            <WidgetCard className="relative overflow-hidden group flex flex-col justify-center min-h-[220px] bg-gradient-to-br from-[#0F0F11] to-black">
+                <div className="absolute -right-6 -bottom-6 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700"><Layers size={200} /></div>
+                <div className="flex items-center gap-2 mb-4">
+                    <div className="w-1.5 h-4 bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981]"></div>
+                    <h3 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.3em]">Dinheiro em Caixa (Saldo)</h3>
                 </div>
-                <h3 className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-wider">Caixa Total</h3>
-                <p className="text-4xl font-light text-[var(--text-primary)] mt-2">{formatCurrency(totalBalance)}</p>
-                <p className="text-xs text-emerald-500 mt-2 flex items-center gap-1 font-bold">
-                    <span className="bg-emerald-500/20 p-1 rounded">▲ 12%</span> vs mês anterior
-                </p>
+                <p className="text-5xl font-black text-white tracking-tighter drop-shadow-lg">{formatCurrency(financialSummary.balance)}</p>
+                <div className="flex items-center gap-6 mt-8">
+                    <div className="flex flex-col"><span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Dinheiro Entrando</span><span className="text-base font-black text-emerald-400">+{formatCurrency(financialSummary.income)}</span></div>
+                    <div className="w-px h-10 bg-white/5"></div>
+                    <div className="flex flex-col"><span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Dinheiro Saindo</span><span className="text-base font-black text-rose-400">-{formatCurrency(financialSummary.expense)}</span></div>
+                </div>
             </WidgetCard>
 
-            {/* Card 2: Recent History (New) */}
-            <WidgetCard className="lg:col-span-1 flex flex-col min-h-[180px]">
-                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4 border-b border-[var(--border-color)] pb-2">Histórico Recente</h3>
-                <div className="space-y-3 flex-grow">
-                    {recentTransactions.length > 0 ? recentTransactions.map(t => (
-                        <div key={t.id} className="flex items-center justify-between group">
+            <WidgetCard className="flex flex-col min-h-[220px]">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xs font-black text-white uppercase tracking-[0.3em]">Últimos Lançamentos</h3>
+                    <span className="text-[9px] bg-white/5 border border-white/10 px-2 py-1 rounded text-[var(--text-muted)] font-black uppercase tracking-widest">Sincronizado</span>
+                </div>
+                <div className="space-y-4">
+                    {recentTransactions.map(t => (
+                        <div key={t.id} className="flex items-center justify-between group/item">
                             <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center border ${t.type === 'receita' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
-                                    {t.type === 'receita' ? <ArrowUpRightIcon className="w-4 h-4" /> : <ArrowDownLeftIcon className="w-4 h-4" />}
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all ${t.type === 'receita' ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-500' : 'bg-rose-500/5 border-rose-500/10 text-rose-500'}`}>
+                                    {t.type === 'receita' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                                 </div>
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-medium text-[var(--text-primary)] line-clamp-1">{t.description}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] bg-[var(--bg-elevation-2)] px-1.5 py-0.5 rounded text-[var(--text-muted)]">{categories.find(c => c.id === t.categoryId)?.name}</span>
-                                        <span className="text-[10px] text-[var(--text-muted)]">{formatDate(t.date)}</span>
-                                    </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold text-white truncate max-w-[150px]">{t.description}</p>
+                                    <p className="text-[9px] text-[var(--text-muted)] uppercase font-black tracking-widest opacity-60">{new Date(t.date).toLocaleDateString('pt-BR')}</p>
                                 </div>
                             </div>
-                            <span className={`text-sm font-bold ${t.type === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                {t.type === 'receita' ? '+' : '-'}{formatCurrency(t.amount)}
-                            </span>
+                            <span className={`text-xs font-black ${t.type === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>{t.type === 'receita' ? '+' : '-'}{formatCurrency(t.amount)}</span>
                         </div>
-                    )) : (
-                        <div className="text-center text-[var(--text-muted)] text-sm py-4">Sem transações recentes.</div>
-                    )}
+                    ))}
                 </div>
             </WidgetCard>
 
-            {/* Card 3: AI Quick Tip (New) */}
-            <div className="rounded-2xl p-6 flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#1e1b4b] to-[#312e81] text-white shadow-lg min-h-[180px]">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
-                
-                <div className="relative z-10">
-                    <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-3 backdrop-blur-sm">
-                        <SparklesIcon className="w-6 h-6 text-blue-200" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-1">Dica Rápida</h3>
-                    <p className="text-blue-100/70 text-sm leading-relaxed">
-                        Use nossa IA para analisar padrões nos seus gastos e descobrir onde economizar.
-                    </p>
+            <div className="rounded-[2.5rem] p-8 flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[#1e1b4b] to-[#312e81] text-white shadow-2xl border border-blue-500/20 min-h-[220px] group">
+                <div className="absolute -right-4 -top-4 p-4 opacity-10 group-hover:scale-110 transition-transform duration-1000"><Sparkles size={120} className="text-blue-300" /></div>
+                <div className="relative z-10 animate-fade-in" key={currentTip}>
+                    <div className="flex items-center gap-2 mb-4 font-black uppercase tracking-[0.4em] text-blue-300 text-[9px]"><Sparkles size={14} className="text-blue-400" /> Auditor Financeiro</div>
+                    <h3 className="text-xl font-black mb-3 tracking-tighter">{AI_TIPS[currentTip].title}</h3>
+                    <p className="text-blue-100/70 text-[13px] leading-relaxed font-medium min-h-[60px]">{AI_TIPS[currentTip].text}</p>
                 </div>
-                
-                <div className="relative z-10 mt-4">
-                    <button 
-                        onClick={onRequestAuditor}
-                        className="bg-white text-indigo-900 text-sm font-bold py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors shadow-md w-fit"
-                    >
-                        Consultar Agora
-                    </button>
-                </div>
+                <button onClick={onRequestAuditor} className="relative z-10 bg-white text-[#1e1b4b] text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-xl w-full active:scale-95 mt-4">Falar com Especialista</button>
             </div>
         </div>
 
-        {/* Breakdown Row (Keep existing) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[300px]">
-             <WidgetCard className="flex flex-col justify-center">
-                 <h3 className="text-lg font-light text-[var(--text-primary)] mb-6 border-b border-[var(--border-color)] pb-2">Distribuição de Gastos</h3>
-                 <div className="flex justify-center py-4">
-                     {topExpensesData.length > 0 ? (
-                        <FinanceDonutChart data={topExpensesData} />
-                     ) : (
-                         <p className="text-[var(--text-muted)]">Sem dados de despesas</p>
-                     )}
-                 </div>
-             </WidgetCard>
+        {/* --- GLOBAL COMMAND BLOCK (REDESIGNED 1, 1.1, 1.2) --- */}
+        <div className="grid grid-cols-1 gap-6">
+            <WidgetCard className="p-10 overflow-hidden relative flex flex-col bg-[#08080A]">
+                <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none"><TrendingUp size={180} /></div>
+                
+                <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-12 gap-6 relative z-10">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-black text-[#10b981] uppercase tracking-[0.4em]">Análise Integrada de Dados</span>
+                            <div className="w-8 h-px bg-emerald-500 opacity-30"></div>
+                        </div>
+                        <h3 className="text-3xl font-black text-white uppercase tracking-tighter">Movimentação de Dinheiro</h3>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 bg-white/[0.03] p-2 px-4 rounded-2xl border border-white/5 shadow-2xl backdrop-blur-md">
+                        <div className="flex items-center gap-2 text-white">
+                            <Calendar size={12} className="text-emerald-500" />
+                            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-[11px] font-black outline-none cursor-pointer hover:text-emerald-500 transition-colors uppercase" />
+                        </div>
+                        <div className="w-px h-6 bg-white/10"></div>
+                        <div className="flex items-center gap-2 text-white">
+                            <Calendar size={12} className="text-rose-500" />
+                            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-[11px] font-black outline-none cursor-pointer hover:text-rose-400 transition-colors uppercase" />
+                        </div>
+                    </div>
+                </header>
 
-             <WidgetCard>
-                 <h3 className="text-lg font-light text-[var(--text-primary)] mb-6 border-b border-[var(--border-color)] pb-2">Saldos por Conta</h3>
-                 <div className="space-y-4">
-                     {accounts.map(acc => (
-                         <div key={acc.id} className="group flex items-center justify-between p-4 bg-[var(--bg-elevation-1)] rounded-xl border border-[var(--border-color)] hover:border-[var(--accent-color)] hover:shadow-lg hover:shadow-[var(--accent-glow)]/10 transition-all duration-300">
-                             <div className="flex items-center gap-3">
-                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${acc.type === 'bank' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
-                                     {acc.type === 'bank' ? (
-                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg>
-                                     ) : (
-                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                                     )}
-                                 </div>
-                                 <div>
-                                     <p className="font-medium text-[var(--text-primary)]">{acc.name}</p>
-                                     <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">{acc.type === 'bank' ? 'Conta Corrente' : 'Caixa Físico'}</p>
-                                 </div>
-                             </div>
-                             <div className="text-right">
-                                <span className="block font-mono font-bold text-[var(--text-primary)] text-lg">{formatCurrency(acc.balance)}</span>
-                                <span className="text-xs text-emerald-500">Disponível</span>
-                             </div>
-                         </div>
-                     ))}
-                 </div>
-             </WidgetCard>
+                {/* 1. MAIN TREND CHART (TOP) */}
+                <div className="w-full h-72 mb-12 relative z-10 border-b border-white/5 pb-10">
+                    <FinanceTrendChart data={analyticsData.trendData} />
+                </div>
+
+                <div className="flex flex-col gap-12 relative z-10">
+                    
+                    {/* 2. INTELLIGENCE LOG CARDS (ABOVE RADAR) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/[0.05] transition-all cursor-default group/insight backdrop-blur-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_12px_#ef4444]"></div>Aviso de Despesa</p>
+                                <Activity size={16} className="text-rose-500 opacity-40 group-hover/insight:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="text-[13px] text-white/40 leading-relaxed font-medium">Gastos acima do normal detectados em 'Infra'. Sugerimos revisar as contas para economizar no próximo mês.</p>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[2.5rem] hover:bg-white/[0.05] transition-all cursor-default group/insight backdrop-blur-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981]"></div>Sinal de Lucro</p>
+                                <TrendingUp size={16} className="text-emerald-500 opacity-40 group-hover/insight:opacity-100 transition-opacity" />
+                            </div>
+                            <p className="text-[13px] text-white/40 leading-relaxed font-medium">Suas entradas subiram 14% nos últimos {analyticsData.daysInRange} dias. Seu negócio está ganhando tração e saúde financeira.</p>
+                        </div>
+                    </div>
+
+                    {/* 3. NEURAL ALLOCATION ENGINE - EXPANDED SCALE (BELOW LOGS) */}
+                    <div className="w-full">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></div>
+                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/30">Motor de Inteligência de Gastos</span>
+                            <div className="flex-grow h-px bg-white/5 opacity-50"></div>
+                        </div>
+                        {analyticsData.metrics && (
+                            <FinanceRadarChart 
+                                metrics={analyticsData.metrics} 
+                                categoryData={analyticsData.categoryData}
+                                budgetRange={[130, 229]} 
+                            />
+                        )}
+                    </div>
+
+                    {/* 4. CANAIS DE INVESTIMENTO (FOOTER INTEGRATION 1.2) */}
+                    <div className="mt-12 pt-12 border-t border-white/5">
+                        <div className="flex items-center gap-4 mb-10">
+                            <BarChart3 className="text-rose-500 w-5 h-5" />
+                            <h3 className="text-[11px] font-black text-white uppercase tracking-[0.5em]">Distribuição por Plataformas</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                                { name: 'Meta Ads', balance: 5200.40, color: 'bg-blue-600', icon: 'M', p: 80 },
+                                { name: 'Google Ads', balance: 3450.00, color: 'bg-red-600', icon: 'G', p: 65 },
+                                { name: 'TikTok Ads', balance: 1200.00, color: 'bg-black border border-white/20', icon: 'T', p: 30 },
+                            ].map(acc => (
+                                <div key={acc.name} className="flex flex-col gap-4 p-6 rounded-3xl bg-white/[0.01] border border-white/5 group hover:bg-white/[0.03] transition-all">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-9 h-9 rounded-xl ${acc.color} flex items-center justify-center font-black text-white text-[11px] shadow-2xl group-hover:scale-110 transition-transform`}>{acc.icon}</div>
+                                            <span className="text-xs font-black text-white uppercase tracking-tight">{acc.name}</span>
+                                        </div>
+                                        <span className="font-mono font-black text-white text-xs">{formatCurrency(acc.balance)}</span>
+                                    </div>
+                                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-[#10b981] shadow-[0_0_10px_#10b981] transition-all duration-1000" style={{ width: `${acc.p}%` }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="mt-12 flex justify-center">
+                            <button className="px-10 py-5 bg-white/5 hover:bg-[var(--accent-color)] hover:text-white text-[10px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] rounded-2xl transition-all border border-white/10 shadow-2xl active:scale-95 group">
+                                <span className="flex items-center gap-3">Matriz de Performance Avançada <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </WidgetCard>
         </div>
     </div>
   );
