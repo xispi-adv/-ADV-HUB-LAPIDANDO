@@ -20,7 +20,7 @@ const FinanceiroView: React.FC<FinanceiroViewProps> = ({ initialTab }) => {
   }, [initialTab]);
 
   return (
-    <div className={`h-full flex flex-col animate-fade-in-up ${theme === 'light' ? 'bg-slate-50 -m-10 p-10' : ''}`}>
+    <div className="h-full flex flex-col animate-fade-in-up">
       <header className="flex-shrink-0 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-[var(--border-color)] pb-8">
         <div>
             <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
@@ -47,7 +47,7 @@ const FinanceiroView: React.FC<FinanceiroViewProps> = ({ initialTab }) => {
         </div>
       </header>
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
           {activeTab === 'cockpit' && <FinancialCockpit onRequestAuditor={() => setActiveTab('auditor')} />}
           {activeTab === 'bookkeeping' && <BookkeepingView />}
           {activeTab === 'auditor' && <AIAuditorView />}
