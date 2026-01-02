@@ -9,6 +9,7 @@ import { useTheme } from '../../context/ThemeContext';
 // --- 1. MAIN FLOW TREND CHART ---
 interface FlowChartProps {
     data: { label: string; revenue: number; expense: number }[];
+    forceTheme?: 'light' | 'dark';
 }
 
 const TrendTooltip = ({ active, payload, label, theme }: any) => {
@@ -38,8 +39,10 @@ const TrendTooltip = ({ active, payload, label, theme }: any) => {
     return null;
 };
 
-export const FinanceTrendChart: React.FC<FlowChartProps> = ({ data }) => {
-    const { theme } = useTheme();
+export const FinanceTrendChart: React.FC<FlowChartProps> = ({ data, forceTheme }) => {
+    const { theme: globalTheme } = useTheme();
+    const theme = forceTheme || globalTheme;
+    
     if (!data || data.length < 2) return null;
     return (
         <div className="w-full h-full group/chart">
@@ -80,6 +83,7 @@ interface FinanceAnalyticsPanelProps {
     metrics: any;
     categoryData: CategoryMetric[];
     budgetRange: [number, number];
+    forceTheme?: 'light' | 'dark';
 }
 
 const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6'];
@@ -122,8 +126,9 @@ const SEGMENT_ATTRIBUTES: Record<string, {name: string, value: number}[]> = {
     ]
 };
 
-export const StrategicAnalyticsPanel: React.FC<FinanceAnalyticsPanelProps> = ({ metrics, categoryData, budgetRange }) => {
-    const { theme } = useTheme();
+export const StrategicAnalyticsPanel: React.FC<FinanceAnalyticsPanelProps> = ({ metrics, categoryData, budgetRange, forceTheme }) => {
+    const { theme: globalTheme } = useTheme();
+    const theme = forceTheme || globalTheme;
     const [focusedCategoryId, setFocusedCategoryId] = useState<string | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
 
@@ -239,6 +244,6 @@ export const StrategicAnalyticsPanel: React.FC<FinanceAnalyticsPanelProps> = ({ 
     );
 };
 
-export const FinanceRadarChart: React.FC<any> = ({ metrics, categoryData, budgetRange }) => (
-    <StrategicAnalyticsPanel metrics={metrics} categoryData={categoryData} budgetRange={budgetRange} />
+export const FinanceRadarChart: React.FC<any> = ({ metrics, categoryData, budgetRange, forceTheme }) => (
+    <StrategicAnalyticsPanel metrics={metrics} categoryData={categoryData} budgetRange={budgetRange} forceTheme={forceTheme} />
 );
