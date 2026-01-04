@@ -47,7 +47,7 @@ const AIPlaygroundView: React.FC<AIPlaygroundViewProps> = ({ initialTool, initia
     ];
 
     return (
-        <div className={`animate-fade-in h-full flex flex-col relative overflow-hidden ${theme === 'light' ? 'bg-slate-50 -m-10 p-10' : ''}`}>
+        <div className="animate-fade-in h-full flex flex-col relative overflow-hidden">
             
             {/* Background Neural Grid FX */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none z-0" 
@@ -55,7 +55,7 @@ const AIPlaygroundView: React.FC<AIPlaygroundViewProps> = ({ initialTool, initia
             </div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none"></div>
 
-            {/* Header: Titulo e Subtitulo Intocados */}
+            {/* Header: Mantido Conforme Protocolo */}
             <header className="mb-4 flex flex-col justify-start gap-2 border-b border-[var(--border-color)] pb-6 flex-shrink-0 relative z-10">
                 <h1 className={`text-5xl font-light tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                     AI Playground
@@ -66,11 +66,11 @@ const AIPlaygroundView: React.FC<AIPlaygroundViewProps> = ({ initialTool, initia
             </header>
 
             {/* Content Integrated Container */}
-            <div className="flex-grow flex flex-col min-h-0 w-full max-w-7xl mx-auto relative z-10">
+            <div className="flex-grow flex flex-col min-h-0 w-full max-w-7xl mx-auto relative z-10 overflow-visible">
                 
-                {/* Navegação Integrada (Sem o fundo que cortava a visualização) */}
-                <div className="flex justify-center py-6">
-                    <nav className="flex items-center gap-4">
+                {/* Navegação Integrada com Fundo Escuro (DOCK) */}
+                <div className="flex justify-center py-8">
+                    <nav className="flex items-center gap-2 p-1.5 bg-[#0a0a0c] border border-white/5 rounded-[1.2rem] shadow-2xl shadow-black/40 backdrop-blur-xl">
                         {tabs.map(tab => {
                             const IsActive = activeTab === tab.id;
                             const Icon = tab.icon;
@@ -79,22 +79,22 @@ const AIPlaygroundView: React.FC<AIPlaygroundViewProps> = ({ initialTool, initia
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`
-                                        flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group
+                                        flex items-center gap-2.5 px-6 py-2.5 rounded-[0.9rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 group
                                         ${IsActive 
                                             ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-[0_0_20px_rgba(8,145,178,0.3)] scale-105' 
-                                            : 'text-[var(--text-secondary)] hover:text-white hover:bg-white/5'}
+                                            : 'text-gray-500 hover:text-white hover:bg-white/5'}
                                     `}
                                 >
                                     <Icon size={14} className={`transition-all duration-500 ${IsActive ? 'rotate-12 scale-110' : 'group-hover:scale-110'}`} />
-                                    <span className={IsActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-100'}>{tab.label}</span>
+                                    <span className={IsActive ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'}>{tab.label}</span>
                                 </button>
                             )
                         })}
                     </nav>
                 </div>
 
-                {/* Main Content Area */}
-                <div className="flex-grow overflow-y-auto no-scrollbar pb-10">
+                {/* Main Content Area - Ajustado para overflow-visible e sem fundo fixo */}
+                <div className="flex-grow overflow-y-auto no-scrollbar pb-10 overflow-x-visible px-4">
                      {activeTab === 'recentes' && <RecentsView history={history} />}
                      {activeTab === 'ferramentas' && <ToolsView onSelectTool={(tool) => setView(tool)} />}
                      {activeTab === 'suporte' && <SupportView />}
