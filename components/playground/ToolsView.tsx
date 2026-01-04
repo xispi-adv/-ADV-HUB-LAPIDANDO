@@ -1,67 +1,107 @@
 
 import React from 'react';
-
-const ImageV2Icon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16 mb-6 text-[var(--text-primary)] opacity-80 group-hover:text-[var(--accent-color)] transition-colors duration-500">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-    </svg>
-);
-const VideoIcon: React.FC = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16 mb-6 text-[var(--text-primary)] opacity-80 group-hover:text-[var(--accent-color)] transition-colors duration-500">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
-    </svg>
-);
+import { Camera, Play, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 interface ToolsViewProps {
     onSelectTool: (tool: 'imageGenerator' | 'videoGenerator') => void;
 }
 
-const ToolCard: React.FC<{title: string, description: string, icon: React.ReactNode, onClick: () => void, delay: number}> = ({ title, description, icon, onClick, delay }) => {
+const ToolCard: React.FC<{
+    title: string, 
+    subtitle: string,
+    description: string, 
+    icon: React.ReactNode, 
+    onClick: () => void, 
+    delay: number,
+    color: 'cyan' | 'magenta'
+}> = ({ title, subtitle, description, icon, onClick, delay, color }) => {
+    const { theme } = useTheme();
+    
+    const config = {
+        cyan: {
+            glow: 'group-hover:shadow-[0_0_50px_rgba(6,182,212,0.2)]',
+            border: 'group-hover:border-cyan-500/50',
+            accent: 'text-cyan-400',
+            gradient: 'from-cyan-500/10 to-blue-600/10',
+            btn: 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-900/20'
+        },
+        magenta: {
+            glow: 'group-hover:shadow-[0_0_50px_rgba(236,72,153,0.2)]',
+            border: 'group-hover:border-pink-500/50',
+            accent: 'text-pink-400',
+            gradient: 'from-pink-500/10 to-rose-600/10',
+            btn: 'bg-pink-600 hover:bg-pink-500 shadow-pink-900/20'
+        }
+    }[color];
+
     return (
         <div
             onClick={onClick}
             style={{ animationDelay: `${delay}ms` }}
-            className="group relative h-80 w-full bg-[var(--bg-card)] backdrop-blur-sm border border-[var(--border-color)] rounded-3xl overflow-hidden cursor-pointer animate-fade-in-up transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:border-[var(--accent-color)]"
+            className={`
+                group relative min-h-[300px] w-full bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] overflow-hidden cursor-pointer animate-fade-in-up transition-all duration-700
+                hover:-translate-y-2 ${config.glow} ${config.border}
+            `}
         >
-            {/* Animated Border Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-elevation-1)] via-transparent to-[var(--bg-elevation-1)] opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+            {/* Glossy Gradient Overlay */}
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-b ${config.gradient}`}></div>
             
-            {/* Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
-                <div className="transform group-hover:scale-110 group-hover:-translate-y-2 transition-transform duration-500 ease-out">
-                    {icon}
+            {/* Grid Pattern */}
+            <div className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10">
+                {/* Icon Container - Scaled Down */}
+                <div className={`mb-4 p-5 rounded-2xl bg-white/5 border border-white/10 transition-all duration-700 transform group-hover:scale-105 group-hover:rotate-3 ${config.accent}`}>
+                    {React.cloneElement(icon as React.ReactElement, { size: 32 })}
                 </div>
-                <h3 className="text-2xl font-light tracking-widest uppercase text-[var(--text-primary)] mb-3 transition-colors">{title}</h3>
-                <div className="w-12 h-px bg-[var(--border-color)] mb-4 group-hover:w-24 group-hover:bg-[var(--accent-color)] transition-all duration-500"></div>
-                <p className="text-[var(--text-secondary)] text-center text-sm leading-relaxed max-w-xs group-hover:text-[var(--text-primary)] transition-colors">
+                
+                <span className={`text-[8px] font-black uppercase tracking-[0.4em] mb-2 ${config.accent} opacity-60 group-hover:opacity-100 transition-opacity`}>
+                    {subtitle}
+                </span>
+                
+                <h3 className="text-3xl font-black tracking-tighter text-white mb-3 transition-all">
+                    {title}
+                </h3>
+                
+                <p className="text-gray-400 text-xs leading-relaxed mb-6 max-w-[260px] group-hover:text-gray-200 transition-colors font-medium">
                     {description}
                 </p>
-            </div>
 
-            {/* Glow Effect */}
-            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-[var(--accent-color)] opacity-10 blur-[80px] rounded-full group-hover:opacity-20 transition-all duration-500"></div>
+                {/* Primary Action Button - More Compact */}
+                <div className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all shadow-xl ${config.btn} flex items-center gap-2 active:scale-95 transform`}>
+                    <Zap size={12} fill="currentColor" />
+                    <span>Acessar</span>
+                </div>
+            </div>
+            
+            {/* Ambient Background Flare */}
+            <div className={`absolute -bottom-20 left-1/2 -translate-x-1/2 w-48 h-24 blur-[80px] opacity-0 group-hover:opacity-30 transition-opacity duration-1000 ${color === 'cyan' ? 'bg-cyan-500' : 'bg-pink-500'}`}></div>
         </div>
     )
 }
 
 const ToolsView: React.FC<ToolsViewProps> = ({ onSelectTool }) => {
     return (
-        <div className="h-full flex items-center justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full px-4">
+        <div className="h-full flex items-center justify-center py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10 max-w-4xl w-full px-6">
                 <ToolCard
-                    title="Neural Image"
-                    description="Síntese de imagem de alta fidelidade. Converta prompts textuais em arte digital, renderizações 3D ou fotografia."
-                    icon={<ImageV2Icon />}
+                    title="Gerar Art"
+                    subtitle="Neural Engine"
+                    description="Sintetize imagens de alta fidelidade a partir de descrições neurais. Ideal para assets e branding."
+                    icon={<Camera strokeWidth={1.5} />}
                     onClick={() => onSelectTool('imageGenerator')}
                     delay={0}
+                    color="cyan"
                 />
                  <ToolCard
-                    title="Motion Video"
-                    description="Geração de vídeo cinemático. Crie cenas dinâmicas e animações fluidas com controle temporal."
-                    icon={<VideoIcon />}
+                    title="Gerar Vídeo"
+                    subtitle="Motion Dynamics"
+                    description="Materialize sequências cinematográficas. Controle total sobre fluidez e enquadramento."
+                    icon={<Play strokeWidth={1.5} />}
                     onClick={() => onSelectTool('videoGenerator')}
-                    delay={100}
+                    delay={150}
+                    color="magenta"
                 />
             </div>
         </div>
