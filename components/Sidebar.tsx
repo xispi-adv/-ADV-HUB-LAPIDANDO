@@ -18,7 +18,7 @@ const TarefasIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 const AgentsIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.5 1.591L5.22 15.75M9.75 3.104a2.25 2.25 0 014.5 0v5.714a2.25 2.25 0 01-.5 1.591L14.78 15.75M9.75 3.104a2.25 2.25 0 00-4.5 0v5.714a2.25 2.25 0 00.5 1.591L5.22 15.75m14.06-5.25a2.25 2.25 0 00-4.5 0v5.714a2.25 2.25 0 00.5 1.591L14.78 15.75m-4.5-8.25h4.5a2.25 2.25 0 010 4.5h-4.5a2.25 2.25 0 010-4.5zM10.22 15.75a2.25 2.25 0 10-4.5 0 2.25 2.25 0 004.5 0zM14.78 15.75a2.25 2.25 0 10-4.5 0 2.25 2.25 0 004.5 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.5 1.591L5.22 15.75M9.75 3.104a2.25 2.25 0 014.5 0v5.714a2.25 2.25 0 01-.5 1.591L14.78 15.75M9.75 3.104a2.25 2.25 0 00-4.5 0v5.714a2.25 2.25 0 000.5 1.591L5.22 15.75m14.06-5.25a2.25 2.25 0 00-4.5 0v5.714a2.25 2.25 0 000.5 1.591L14.78 15.75m-4.5-8.25h4.5a2.25 2.25 0 010 4.5h-4.5a2.25 2.25 0 010-4.5zM10.22 15.75a2.25 2.25 0 10-4.5 0 2.25 2.25 0 004.5 0zM14.78 15.75a2.25 2.25 0 10-4.5 0 2.25 2.25 0 004.5 0z" />
     </svg>
 );
 const ProjetosIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -123,7 +123,7 @@ interface NavGroup {
 const Sidebar: React.FC<SidebarProps> = ({ navLinks, activeView, onNavigate, isCollapsed, onToggle }) => {
     const { theme, toggleTheme } = useTheme();
     const { projects, selectProject } = useTaskManager();
-    const { agents } = useAgents();
+    const { agents, groups } = useAgents();
     
     // State for Submenu
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -132,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navLinks, activeView, onNavigate, isC
     
     // Organize links into logical groups
     const groupedLinks: NavGroup[] = useMemo(() => {
-        const groups: Record<string, string[]> = {
+        const groupsConfig: Record<string, string[]> = {
             'Principal': ['Home'],
             'Operacional': ['Tarefas', 'Meus Projetos', 'Nexus Board'],
             'Gestão': ['Gestão de clientes', 'Calendário', 'E-mail', 'Financeiro'],
@@ -142,7 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navLinks, activeView, onNavigate, isC
 
         const result: NavGroup[] = [];
         
-        Object.entries(groups).forEach(([title, linkLabels]) => {
+        Object.entries(groupsConfig).forEach(([title, linkLabels]) => {
              const linksInGroup = navLinks.filter(link => linkLabels.includes(link.label));
              if (linksInGroup.length > 0) {
                  result.push({ title, links: linksInGroup });
@@ -150,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navLinks, activeView, onNavigate, isC
         });
 
         // Catch-all for any links not explicitly grouped
-        const groupedLabels = Object.values(groups).flat();
+        const groupedLabels = Object.values(groupsConfig).flat();
         const remainingLinks = navLinks.filter(link => !groupedLabels.includes(link.label));
         if (remainingLinks.length > 0) {
             result.push({ title: 'Outros', links: remainingLinks });
@@ -230,18 +230,18 @@ const Sidebar: React.FC<SidebarProps> = ({ navLinks, activeView, onNavigate, isC
             case 'Meus Agents':
                 content = (
                     <>
-                        <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Seus Agentes</h4>
+                        <h4 className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">Equipes de IA</h4>
                         <ul className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
-                            {agents.map(a => (
-                                <li key={a.id}>
+                            {groups.map(g => (
+                                <li key={g.id}>
                                     <button 
                                         onClick={() => {
-                                            onNavigate('Meus Agents', { agentId: a.id });
+                                            onNavigate('Meus Agents', { groupId: g.id });
                                             setHoveredItem(null);
                                         }}
                                         className="w-full text-left text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevation-2)] px-2 py-1.5 rounded transition-colors truncate"
                                     >
-                                        {a.title}
+                                        {g.name}
                                     </button>
                                 </li>
                             ))}

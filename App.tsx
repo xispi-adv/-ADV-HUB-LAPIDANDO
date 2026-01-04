@@ -60,7 +60,7 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'Home': return <HomeView setActiveView={handleNavigate} />;
-      case 'Meus Agents': return <MeusAgentsView initialAgentId={navParams?.agentId} />;
+      case 'Meus Agents': return <MeusAgentsView initialAgentId={navParams?.agentId} initialGroupId={navParams?.groupId} />;
       case 'E-mail': return <EmailCentralView />;
       case 'Financeiro': return <FinanceiroView initialTab={navParams?.tab} />;
       case 'Gestão de clientes': return <GestaoClientesView setActiveView={handleNavigate} />;

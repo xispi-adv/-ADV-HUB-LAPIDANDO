@@ -12,9 +12,10 @@ import { Plus, ChevronLeft, UserPlus, Users, ShieldCheck } from 'lucide-react';
 
 interface MeusAgentsViewProps {
     initialAgentId?: string;
+    initialGroupId?: string;
 }
 
-const MeusAgentsView: React.FC<MeusAgentsViewProps> = ({ initialAgentId }) => {
+const MeusAgentsView: React.FC<MeusAgentsViewProps> = ({ initialAgentId, initialGroupId }) => {
     const { agents, groups } = useAgents();
     const { theme } = useTheme();
     const [selectedGroup, setSelectedGroup] = useState<AgentGroup | null>(null);
@@ -28,6 +29,13 @@ const MeusAgentsView: React.FC<MeusAgentsViewProps> = ({ initialAgentId }) => {
             if (agent) setSelectedAgent(agent);
         }
     }, [initialAgentId, agents]);
+
+    useEffect(() => {
+        if (initialGroupId) {
+            const group = groups.find(g => g.id === initialGroupId);
+            if (group) setSelectedGroup(group);
+        }
+    }, [initialGroupId, groups]);
 
     if (selectedAgent) {
         return <ChatView agent={selectedAgent} onBack={() => setSelectedAgent(null)} />;
