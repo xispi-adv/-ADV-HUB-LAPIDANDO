@@ -11,23 +11,29 @@ const INITIAL_ACCOUNTS: FinancialAccount[] = [
 ];
 
 const INITIAL_CATEGORIES: FinancialCategory[] = [
-  { id: 'cat-1', name: 'Serviços de Marketing', type: 'receita', budget: 0 },
-  { id: 'cat-2', name: 'Software & SaaS', type: 'despesa', budget: 2000 },
-  { id: 'cat-3', name: 'Pessoal / Freelancers', type: 'despesa', budget: 5000 },
-  { id: 'cat-4', name: 'Infraestrutura', type: 'despesa', budget: 1000 },
-  { id: 'cat-5', name: 'Impostos', type: 'despesa', budget: 1500 },
-  { id: 'cat-6', name: 'Outros', type: 'despesa', budget: 500 },
+  // CATEGORIAS DE DESPESA
+  { id: 'cat-desp-1', name: 'Serviços de Marketing', type: 'despesa', budget: 1000 },
+  { id: 'cat-desp-2', name: 'Software e SaaS', type: 'despesa', budget: 2000 },
+  { id: 'cat-desp-3', name: 'Freelancer', type: 'despesa', budget: 5000 },
+  { id: 'cat-desp-4', name: 'Infraestrutura', type: 'despesa', budget: 1000 },
+  { id: 'cat-desp-5', name: 'Cloud', type: 'despesa', budget: 800 },
+  { id: 'cat-desp-6', name: 'Impostos', type: 'despesa', budget: 1500 },
+  { id: 'cat-desp-7', name: 'Outros', type: 'despesa', budget: 500 },
+
+  // CATEGORIAS DE RECEITA
+  { id: 'cat-rec-1', name: 'Mensalidade Plano', type: 'receita' },
+  { id: 'cat-rec-2', name: 'Serviço Automação', type: 'receita' },
+  { id: 'cat-rec-3', name: 'Serviço Site/ Landing Page', type: 'receita' },
+  { id: 'cat-rec-4', name: 'Serviço Manuntenção', type: 'receita' },
+  { id: 'cat-rec-5', name: 'Serviço de Marketing', type: 'receita' },
+  { id: 'cat-rec-6', name: 'Outros', type: 'receita' },
 ];
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
-  { id: 't1', date: '2024-05-01', description: 'Recebimento Cliente X', amount: 4500, type: 'receita', categoryId: 'cat-1', accountId: 'acc-1', status: 'pago', clientId: 'cli-1' }, // Nubank
-  { id: 't2', date: '2024-05-02', description: 'Assinatura Adobe CC', amount: 250, type: 'despesa', categoryId: 'cat-2', accountId: 'acc-1', status: 'pago' },
-  { id: 't3', date: '2024-05-05', description: 'Pagamento Freelancer Design', amount: 1200, type: 'despesa', categoryId: 'cat-3', accountId: 'acc-2', status: 'pago' },
-  { id: 't4', date: '2024-05-10', description: 'Servidor AWS', amount: 450, type: 'despesa', categoryId: 'cat-4', accountId: 'acc-1', status: 'pendente' },
-  { id: 't5', date: '2024-05-15', description: 'Recebimento Cliente Y', amount: 3200, type: 'receita', categoryId: 'cat-1', accountId: 'acc-1', status: 'pendente' },
-  { id: 't6', date: '2024-05-18', description: 'Google Ads Crédito', amount: 1500, type: 'despesa', categoryId: 'cat-4', accountId: 'acc-1', status: 'pago' },
-  { id: 't7', date: '2024-05-20', description: 'Consultoria SEO', amount: 2800, type: 'receita', categoryId: 'cat-1', accountId: 'acc-1', status: 'pago' },
-  { id: 't8', date: '2024-04-10', description: 'Setup Inicial McDonalds', amount: 8000, type: 'receita', categoryId: 'cat-1', accountId: 'acc-1', status: 'pago', clientId: 'cli-2' },
+  { id: 't1', date: '2024-05-01', description: 'Recebimento Cliente X', amount: 4500, type: 'receita', categoryId: 'cat-rec-1', accountId: 'acc-1', status: 'pago', clientId: 'cli-1' },
+  { id: 't2', date: '2024-05-02', description: 'Assinatura Adobe CC', amount: 250, type: 'despesa', categoryId: 'cat-desp-2', accountId: 'acc-1', status: 'pago' },
+  { id: 't3', date: '2024-05-05', description: 'Pagamento Freelancer Design', amount: 1200, type: 'despesa', categoryId: 'cat-desp-3', accountId: 'acc-2', status: 'pago' },
+  { id: 't4', date: '2024-05-10', description: 'Servidor AWS', amount: 450, type: 'despesa', categoryId: 'cat-desp-5', accountId: 'acc-1', status: 'pendente' },
 ];
 
 export interface ChatMessage {
@@ -43,7 +49,7 @@ interface FinanceContextType {
   transactions: Transaction[];
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
-  classifyTransactionWithAI: (description: string) => Promise<string>;
+  classifyTransactionWithAI: (description: string, type: TransactionType) => Promise<string>;
   // Chat Bot Functions
   chatHistory: ChatMessage[];
   sendFinancialMessage: (message: string) => Promise<void>;
@@ -89,32 +95,32 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
-  const classifyTransactionWithAI = useCallback(async (description: string): Promise<string> => {
-    if (!description) return 'cat-6';
+  const classifyTransactionWithAI = useCallback(async (description: string, type: TransactionType): Promise<string> => {
+    if (!description) return '';
     
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const categoryNames = categories.map(c => c.name).join(', ');
+      const filteredCategories = categories.filter(c => c.type === type);
+      const categoryNames = filteredCategories.map(c => c.name).join(', ');
       
       const prompt = `
         Você é um Assistente Contábil (NEXUS-FIN).
-        Categorize a transação: "${description}".
-        As categorias disponíveis são: ${categoryNames}.
+        Categorize esta ${type}: "${description}".
+        As categorias disponíveis para ${type} são: ${categoryNames}.
         Retorne APENAS o nome exato da categoria. Se não souber, retorne "Outros".
       `;
 
-      // Fixed: Updated to gemini-3-flash-preview as per guidelines
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: prompt,
       });
 
       const suggestedName = response.text?.trim();
-      const foundCategory = categories.find(c => c.name.toLowerCase() === suggestedName?.toLowerCase());
+      const foundCategory = filteredCategories.find(c => c.name.toLowerCase() === suggestedName?.toLowerCase());
       
-      return foundCategory ? foundCategory.id : 'cat-6'; 
+      return foundCategory ? foundCategory.id : ''; 
     } catch (error) {
-      return 'cat-6';
+      return '';
     }
   }, [categories]);
 
@@ -162,7 +168,6 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
           // 3. Call Gemini
           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-          // Fixed: Updated to gemini-3-flash-preview as per guidelines
           const response = await ai.models.generateContent({
               model: 'gemini-3-flash-preview',
               contents: [{ role: 'user', parts: [{ text: userText }] }],

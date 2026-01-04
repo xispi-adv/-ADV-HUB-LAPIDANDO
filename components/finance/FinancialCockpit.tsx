@@ -2,21 +2,22 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import WidgetCard from '../dashboard/shared/WidgetCard';
-import { FinanceRadarChart, FinanceTrendChart } from './FinanceCharts';
-import { Sparkles, ArrowUpRight, ArrowDownLeft, Wallet, BarChart3, ChevronRight, Info, Calendar, TrendingUp, Layers, Activity } from 'lucide-react';
+import { CategoryScientificChart, FinanceTrendChart } from './FinanceCharts';
+import { Sparkles, ArrowUpRight, ArrowDownLeft, Calendar, TrendingUp, Layers, Activity, Share2, PieChart } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 const AI_TIPS = [
-    { title: "Sincronia de Caixa", text: "Alita detectou que suas entradas costumam ser maiores às terças. Ajuste vencimentos de boletos para este dia.", action: "Otimizar Ciclo" },
-    { title: "Dreno SaaS", text: "Identificamos 3 assinaturas com baixo uso nos últimos 30 dias. Economia potencial: R$ 450/mês.", action: "Verificar Contas" },
-    { title: "Poder de Lucro", text: "Sua margem de sobra subiu 12%. Recomendamos investir mais em 'Tráfego Pago' para escalar.", action: "Aumentar Escala" },
-    { title: "Alerta de Risco", text: "Projeção mostra saldo negativo em 15 dias caso seus gastos atuais continuem nesse ritmo.", action: "Ver Projeção" }
+    { title: "Sincronia de Caixa", text: "Alita detectou que suas entradas costumam ser maiores às terças. Ajuste vencimentos de boletos para este dia." },
+    { title: "Dreno SaaS", text: "Identificamos 3 assinaturas com baixo uso nos últimos 30 dias. Economia potencial: R$ 450/mês." },
+    { title: "Poder de Lucro", text: "Sua margem de sobra subiu 12%. Recomendamos investir mais em 'Tráfego Pago' para escalar." },
+    { title: "Alerta de Risco", text: "Projeção mostra saldo negativo em 15 dias caso seus gastos atuais continuem nesse ritmo." }
 ];
 
 const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onRequestAuditor }) => {
   const { transactions, categories, accounts } = useFinance();
   const { theme } = useTheme();
   const [currentTip, setCurrentTip] = useState(0);
+  const [analysisMode, setAnalysisMode] = useState<'receita' | 'despesa'>('despesa');
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -50,95 +51,75 @@ const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onReque
   }, [transactions]);
 
   const analyticsData = useMemo(() => {
-    if (!startDate || !endDate) return { trendData: [], daysInRange: 0, metrics: null, categoryData: [] };
+    if (!startDate || !endDate) return { trendData: [], distributionData: [], totalInPeriod: 0 };
 
     const start = new Date(startDate + 'T00:00:00');
     const end = new Date(endDate + 'T23:59:59');
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const daysInRange = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 || 1;
-
-    const trendData: { label: string, revenue: number, expense: number }[] = [];
-    const allocationMap = new Map<string, number>();
-
-    for (let i = 0; i < daysInRange; i++) {
-        const currentLoopDate = new Date(start);
-        currentLoopDate.setDate(start.getDate() + i);
-        const dateStr = currentLoopDate.toISOString().split('T')[0];
-        const dayT = transactions.filter(t => t.date === dateStr);
-        trendData.push({
-            label: currentLoopDate.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'}),
-            revenue: dayT.filter(t => t.type === 'receita').reduce((a, b) => a + b.amount, 0),
-            expense: dayT.filter(t => t.type === 'despesa').reduce((a, b) => a + b.amount, 0)
-        });
-    }
-
+    
     const periodTransactions = transactions.filter(t => {
         const td = new Date(t.date + 'T00:00:00');
         return td >= start && td <= end;
     });
 
-    const totalPeriodExpense = periodTransactions.filter(t => t.type === 'despesa').reduce((acc, t) => acc + t.amount, 0) || 1;
-    
-    categories.filter(c => c.type === 'despesa').forEach(cat => {
-        const catTotal = periodTransactions.filter(t => t.categoryId === cat.id).reduce((acc, t) => acc + t.amount, 0);
-        if (catTotal > 0) allocationMap.set(cat.name, catTotal);
+    const trendMap = new Map<string, {revenue: number, expense: number}>();
+    periodTransactions.forEach(t => {
+        const existing = trendMap.get(t.date) || { revenue: 0, expense: 0 };
+        if (t.type === 'receita') existing.revenue += t.amount;
+        else existing.expense += t.amount;
+        trendMap.set(t.date, existing);
     });
 
-    const categoryData = Array.from(allocationMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, amount]) => ({
-            id: categories.find(c => c.name === name)?.id || name,
-            name: name.toUpperCase(),
-            amount,
-            percentage: Math.round((amount / totalPeriodExpense) * 100)
+    const trendData = Array.from(trendMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, vals]) => ({
+            label: new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: 'short'}),
+            ...vals
         }));
 
-    const totalIncome = financialSummary.income || 1;
-    const totalExpense = financialSummary.expense || 1;
-    const margin = Math.max(0, ((totalIncome - totalExpense) / totalIncome) * 100);
-    
-    const metrics = {
-        profitMargin: Math.min(100, margin * 1.5),
-        retention: 85,
-        roi: 72,
-        liquidity: Math.min(100, (financialSummary.balance / totalExpense) * 20),
-        taxEfficiency: 90,
-        growthMoM: 65,
-        fixedCosts: Math.min(100, 100 - (totalExpense / totalIncome) * 50),
-        inboundFlow: Math.min(100, (totalIncome / 20000) * 100),
-        burnRate: Math.max(0, 100 - (totalExpense / financialSummary.balance) * 100),
-        investment: 40,
-        cashHealth: Math.min(100, (financialSummary.balance / 10000) * 100)
-    };
+    const totalInPeriod = periodTransactions
+        .filter(t => t.type === analysisMode && t.status === 'pago')
+        .reduce((acc, t) => acc + t.amount, 0) || 1;
 
-    return { trendData, daysInRange, metrics, categoryData };
-  }, [transactions, categories, financialSummary, startDate, endDate]);
+    const grouping = new Map<string, number>();
+    periodTransactions
+        .filter(t => t.type === analysisMode && t.status === 'pago')
+        .forEach(t => {
+            const cat = categories.find(c => c.id === t.categoryId);
+            const name = cat?.name || 'OUTROS';
+            grouping.set(name, (grouping.get(name) || 0) + t.amount);
+        });
+
+    const distributionData = Array.from(grouping.entries()).map(([name, amount]) => ({
+        name,
+        amount,
+        value: (amount / totalInPeriod) * 100
+    })).sort((a, b) => b.amount - a.amount);
+
+    return { trendData, distributionData, totalInPeriod: totalInPeriod === 1 ? 0 : totalInPeriod };
+  }, [transactions, categories, startDate, endDate, analysisMode]);
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
     <div className="space-y-6 pb-20">
-        {/* Row 1: Hero KPIs */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Bloco 1: Dinheiro em Caixa - SEMPRE DARK */}
             <WidgetCard className="relative overflow-hidden group flex flex-col justify-center min-h-[220px] transition-all duration-500 bg-gradient-to-br from-[#0F0F11] to-black border-white/5">
                 <div className="absolute -right-6 -bottom-6 p-4 opacity-[0.03] group-hover:opacity-[0.07] transition-all duration-700 text-white"><Layers size={200} /></div>
                 <div className="flex items-center gap-2 mb-4">
                     <div className="w-1.5 h-4 bg-emerald-500 rounded-full shadow-[0_0_15px_#10b981]"></div>
-                    <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Dinheiro em Caixa (Saldo)</h3>
+                    <h3 className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Capital Disponível</h3>
                 </div>
                 <p className="text-5xl font-black tracking-tighter drop-shadow-lg text-white">{formatCurrency(financialSummary.balance)}</p>
                 <div className="flex items-center gap-6 mt-8">
-                    <div className="flex flex-col"><span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Dinheiro Entrando</span><span className="text-base font-black text-emerald-400">+{formatCurrency(financialSummary.income)}</span></div>
+                    <div className="flex flex-col"><span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Inflow</span><span className="text-base font-black text-emerald-400">+{formatCurrency(financialSummary.income)}</span></div>
                     <div className="w-px h-10 bg-white/10"></div>
-                    <div className="flex flex-col"><span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Dinheiro Saindo</span><span className="text-base font-black text-rose-400">-{formatCurrency(financialSummary.expense)}</span></div>
+                    <div className="flex flex-col"><span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Outflow</span><span className="text-base font-black text-rose-400">-{formatCurrency(financialSummary.expense)}</span></div>
                 </div>
             </WidgetCard>
 
             <WidgetCard className="flex flex-col min-h-[220px]">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className={`text-xs font-black uppercase tracking-[0.3em] ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>Últimos Lançamentos</h3>
-                    <span className="text-[9px] bg-[var(--bg-elevation-1)] border border-[var(--border-color)] px-2 py-1 rounded text-[var(--text-muted)] font-black uppercase tracking-widest">Sincronizado</span>
                 </div>
                 <div className="space-y-4">
                     {recentTransactions.map(t => (
@@ -161,15 +142,14 @@ const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onReque
             <div className={`rounded-[2.5rem] p-8 flex flex-col justify-between relative overflow-hidden text-white shadow-2xl border min-h-[220px] group transition-all duration-500 ${theme === 'light' ? 'bg-gradient-to-br from-blue-600 to-indigo-700 border-blue-400/20' : 'bg-gradient-to-br from-[#1e1b4b] to-[#312e81] border-blue-500/20'}`}>
                 <div className="absolute -right-4 -top-4 p-4 opacity-10 group-hover:scale-110 transition-transform duration-1000"><Sparkles size={120} className="text-blue-300" /></div>
                 <div className="relative z-10 animate-fade-in" key={currentTip}>
-                    <div className="flex items-center gap-2 mb-4 font-black uppercase tracking-[0.4em] text-blue-100 text-[9px]"><Sparkles size={14} className="text-white" /> Auditor Financeiro</div>
+                    <div className="flex items-center gap-2 mb-4 font-black uppercase tracking-[0.4em] text-blue-100 text-[9px]"><Sparkles size={14} className="text-white" /> Auditoria Neural</div>
                     <h3 className="text-xl font-black mb-3 tracking-tighter">{AI_TIPS[currentTip].title}</h3>
                     <p className="text-blue-100/70 text-[13px] leading-relaxed font-medium min-h-[60px]">{AI_TIPS[currentTip].text}</p>
                 </div>
-                <button onClick={onRequestAuditor} className="relative z-10 bg-white text-[#1e1b4b] text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-xl w-full active:scale-95 mt-4">Falar com Especialista</button>
+                <button onClick={onRequestAuditor} className="relative z-10 bg-white text-[#1e1b4b] text-[10px] font-black uppercase tracking-widest py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-xl w-full active:scale-95 mt-4">Consultar Alita</button>
             </div>
         </div>
 
-        {/* --- GLOBAL COMMAND BLOCK: Análise Integrada - SEMPRE DARK --- */}
         <div className="grid grid-cols-1 gap-6">
             <WidgetCard className="p-10 overflow-hidden relative flex flex-col transition-colors duration-500 bg-[#08080A] border-white/5 shadow-2xl">
                 <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none text-white"><TrendingUp size={180} /></div>
@@ -177,10 +157,10 @@ const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onReque
                 <header className="flex flex-col xl:flex-row items-start xl:items-center justify-between mb-12 gap-6 relative z-10">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-black text-[#10b981] uppercase tracking-[0.4em]">Análise Integrada de Dados</span>
+                            <span className="text-[10px] font-black text-[#10b981] uppercase tracking-[0.4em]">Integrated Intelligence Panel</span>
                             <div className="w-8 h-px bg-emerald-500 opacity-30"></div>
                         </div>
-                        <h3 className="text-3xl font-black uppercase tracking-tighter text-white">Movimentação de Dinheiro</h3>
+                        <h3 className="text-3xl font-black uppercase tracking-tighter text-white">Telemetria de Fluxo</h3>
                     </div>
                     
                     <div className="flex items-center gap-3 p-2 px-4 rounded-2xl border shadow-2xl backdrop-blur-md bg-white/[0.03] border-white/5">
@@ -200,70 +180,81 @@ const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onReque
                     <FinanceTrendChart data={analyticsData.trendData} forceTheme="dark" />
                 </div>
 
-                <div className="flex flex-col gap-12 relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="border p-8 rounded-[2.5rem] transition-all cursor-default group/insight backdrop-blur-xl bg-white/[0.02] border-white/5 hover:bg-white/[0.05]">
-                            <div className="flex items-center justify-between mb-4">
-                                <p className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2 text-white"><div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_12px_#ef4444]"></div>Aviso de Despesa</p>
-                                <Activity size={16} className="text-rose-500 opacity-40 group-hover/insight:opacity-100 transition-opacity" />
+                <div className="flex flex-col xl:flex-row gap-12 relative z-10">
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                <Share2 size={20} className="text-blue-500" />
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.5em] text-white">Distribuição por Categoria (Orbital)</h3>
                             </div>
-                            <p className="text-[13px] leading-relaxed font-medium text-white/40">Gastos acima do normal detectados em 'Infra'. Sugerimos revisar as contas para economizar no próximo mês.</p>
-                        </div>
-                        <div className="border p-8 rounded-[2.5rem] transition-all cursor-default group/insight backdrop-blur-xl bg-white/[0.02] border-white/5 hover:bg-white/[0.05]">
-                            <div className="flex items-center justify-between mb-4">
-                                <p className="text-[11px] font-black uppercase tracking-widest flex items-center gap-2 text-white"><div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_#10b981]"></div>Sinal de Lucro</p>
-                                <TrendingUp size={16} className="text-emerald-500 opacity-40 group-hover/insight:opacity-100 transition-opacity" />
+                            
+                            <div className="flex p-1 bg-white/5 rounded-xl border border-white/5 backdrop-blur-md">
+                                <button 
+                                    onClick={() => setAnalysisMode('despesa')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${analysisMode === 'despesa' ? 'bg-rose-500 text-white shadow-[0_0_15px_#f43f5e]' : 'text-white/40 hover:text-white'}`}
+                                >
+                                    <ArrowDownLeft size={14} /> Despesas
+                                </button>
+                                <button 
+                                    onClick={() => setAnalysisMode('receita')}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${analysisMode === 'receita' ? 'bg-emerald-500 text-white shadow-[0_0_15px_#10b981]' : 'text-white/40 hover:text-white'}`}
+                                >
+                                    <ArrowUpRight size={14} /> Receitas
+                                </button>
                             </div>
-                            <p className="text-[13px] leading-relaxed font-medium text-white/40">Suas entradas subiram 14% nos últimos {analyticsData.daysInRange} dias. Seu negócio está ganhando tração e saúde financeira.</p>
-                        </div>
-                    </div>
-
-                    <div className="w-full">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]"></div>
-                            <span className="text-[11px] font-black uppercase tracking-[0.5em] text-white/40">Motor de Inteligência de Gastos</span>
-                            <div className="flex-grow h-px bg-white/5"></div>
-                        </div>
-                        {analyticsData.metrics && (
-                            <FinanceRadarChart 
-                                metrics={analyticsData.metrics} 
-                                categoryData={analyticsData.categoryData}
-                                budgetRange={[130, 229]} 
-                                forceTheme="dark"
-                            />
-                        )}
-                    </div>
-
-                    <div className="mt-12 pt-12 border-t border-white/5">
-                        <div className="flex items-center gap-4 mb-10">
-                            <BarChart3 className="text-rose-500 w-5 h-5" />
-                            <h3 className="text-[11px] font-black uppercase tracking-[0.5em] text-white">Distribuição por Plataformas</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {[
-                                { name: 'Meta Ads', balance: 5200.40, color: 'bg-blue-600', icon: 'M', p: 80 },
-                                { name: 'Google Ads', balance: 3450.00, color: 'bg-red-600', icon: 'G', p: 65 },
-                                { name: 'TikTok Ads', balance: 1200.00, color: 'bg-black border border-white/20', icon: 'T', p: 30 },
-                            ].map(acc => (
-                                <div key={acc.name} className="flex flex-col gap-4 p-6 rounded-3xl border group transition-all bg-white/[0.01] border-white/5 hover:bg-white/[0.03]">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-9 h-9 rounded-xl ${acc.color} flex items-center justify-center font-black text-white text-[11px] shadow-2xl group-hover:scale-110 transition-transform`}>{acc.icon}</div>
-                                            <span className="text-xs font-black uppercase tracking-tight text-white">{acc.name}</span>
-                                        </div>
-                                        <span className="font-mono font-black text-xs text-white">{formatCurrency(acc.balance)}</span>
-                                    </div>
-                                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#10b981] shadow-[0_0_10px_#10b981] transition-all duration-1000" style={{ width: `${acc.p}%` }}></div>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                         
-                        <div className="mt-12 flex justify-center">
-                            <button className="px-10 py-5 bg-white/5 border-white/10 text-white/40 hover:bg-[var(--accent-color)] hover:text-white text-[10px] font-black uppercase tracking-[0.4em] rounded-2xl transition-all border shadow-2xl active:scale-95 group">
-                                <span className="flex items-center gap-3">Matriz de Performance Avançada <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /></span>
-                            </button>
+                        <div className="w-full h-[500px] flex flex-col md:flex-row items-center gap-12 bg-white/[0.01] border border-white/5 rounded-[3rem] p-8 shadow-inner">
+                            <div className="flex-1 h-full">
+                                <CategoryScientificChart 
+                                    data={analyticsData.distributionData} 
+                                    mode={analysisMode}
+                                    total={analyticsData.totalInPeriod}
+                                    forceTheme="dark" 
+                                />
+                            </div>
+                            
+                            <div className="w-full md:w-80 space-y-6">
+                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-2 flex items-center gap-2">
+                                    <PieChart size={14} /> Ranking de Volume
+                                </h4>
+                                <div className="space-y-5 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar">
+                                    {analyticsData.distributionData.map((item, idx) => (
+                                        <div key={item.name} className="flex flex-col gap-2 group cursor-default">
+                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
+                                                <span className="text-white/60 group-hover:text-white transition-colors">{item.name}</span>
+                                                <span className={analysisMode === 'receita' ? 'text-emerald-500' : 'text-rose-500'}>
+                                                    {item.value.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-[1500ms] ease-out ${analysisMode === 'receita' ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-rose-500 shadow-[0_0_10px_#f43f5e]'}`} 
+                                                    style={{ width: `${item.value}%` }} 
+                                                />
+                                            </div>
+                                            <p className="text-[9px] text-white/20 font-mono">VALOR: {formatCurrency(item.amount)}</p>
+                                        </div>
+                                    ))}
+                                    {analyticsData.distributionData.length === 0 && (
+                                        <p className="text-[10px] text-white/20 italic">Aguardando telemetria...</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full xl:w-96 flex flex-col gap-6 pt-16">
+                        <div className={`p-8 rounded-[2.5rem] border flex items-start gap-4 transition-colors ${analysisMode === 'despesa' ? 'bg-rose-500/[0.03] border-rose-500/10' : 'bg-emerald-500/[0.03] border-emerald-500/10'}`}>
+                            <Activity size={20} className={analysisMode === 'despesa' ? 'text-rose-500' : 'text-emerald-500'} />
+                            <div>
+                                <span className={`text-[9px] font-black uppercase tracking-widest block mb-1 ${analysisMode === 'despesa' ? 'text-rose-400' : 'text-emerald-400'}`}>Insights Alita</span>
+                                <p className="text-xs text-white/60 leading-relaxed">
+                                    {analysisMode === 'despesa' 
+                                        ? "Detectamos uma concentração atípica em recursos operacionais. Sugerimos revisar o orçamento de SaaS para este período."
+                                        : "O fluxo de recebimentos via contratos recorrentes cresceu 18%. Momento ideal para reinvestir em infraestrutura."}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
