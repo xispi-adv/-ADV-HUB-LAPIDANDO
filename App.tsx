@@ -12,7 +12,6 @@ import MarketingOpsCalendarView from './components/calendar/MarketingOpsCalendar
 import EmailCentralView from './components/EmailCentralView';
 import FinanceiroView from './components/finance/FinanceiroView';
 import GestaoClientesView from './components/clients/GestaoClientesView';
-import NexusBoardView from './components/nexus/NexusBoardView';
 import SettingsLayout from './components/settings/SettingsLayout';
 
 import { TaskManagerProvider } from './context/TaskManagerContext';
@@ -22,13 +21,11 @@ import { AgentProvider } from './context/AgentContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { FinanceProvider } from './context/FinanceContext';
 import { ClientProvider } from './context/ClientContext';
-import { NexusProvider } from './context/NexusContext';
 
 const navLinks: NavLink[] = [
   { id: 'Home', label: 'Home' },
   { id: 'Tarefas', label: 'Tarefas' },
   { id: 'Meus Projetos', label: 'Meus Projetos' },
-  { id: 'Nexus Board', label: 'Nexus Board' },
   { id: 'Gestão de clientes', label: 'Gestão de clientes' },
   { id: 'Calendário', label: 'Calendário' },
   { id: 'E-mail', label: 'E-mail' },
@@ -66,7 +63,6 @@ const AppContent: React.FC = () => {
       case 'Gestão de clientes': return <GestaoClientesView setActiveView={handleNavigate} />;
       case 'Tarefas': return <TarefasView />;
       case 'Meus Projetos': return <MeusProjetosView setActiveView={handleNavigate} />;
-      case 'Nexus Board': return <NexusBoardView />;
       case 'AI Playground': return <AIPlaygroundView initialTool={navParams?.tool} initialTab={navParams?.tab} />;
       case 'Calendário': return <MarketingOpsCalendarView />;
       case 'Configurações': return <SettingsLayout setActiveView={handleNavigate} />;
@@ -108,9 +104,7 @@ const App: React.FC = () => {
                     <CalendarProvider>
                         <EmailProvider>
                             <FinanceProvider>
-                                <NexusProvider>
-                                    <AppContent />
-                                </NexusProvider>
+                                <AppContent />
                             </FinanceProvider>
                         </EmailProvider>
                     </CalendarProvider>
