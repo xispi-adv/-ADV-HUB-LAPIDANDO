@@ -6,7 +6,6 @@ import {
 } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 
-// --- 1. TENDÊNCIA DE FLUXO (ÁREA) ---
 interface FlowChartProps {
     data: { label: string; revenue: number; expense: number }[];
     forceTheme?: 'light' | 'dark';
@@ -23,14 +22,14 @@ const CustomTooltip = ({ active, payload, label, theme }: any) => {
                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
                             <span className="text-xs font-bold uppercase tracking-tight">Receitas</span>
                         </div>
-                        <span className="text-xs font-mono font-black text-emerald-500">R$ {payload[0].value.toLocaleString('pt-BR')}</span>
+                        <span className="text-xs font-mono font-black text-emerald-500">R$ {payload[0]?.value?.toLocaleString('pt-BR') || 0}</span>
                     </div>
                     <div className="flex items-center justify-between gap-8">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_#f43f5e]"></div>
                             <span className="text-xs font-bold uppercase tracking-tight">Despesas</span>
                         </div>
-                        <span className="text-xs font-mono font-black text-rose-500">R$ {payload[1].value.toLocaleString('pt-BR')}</span>
+                        <span className="text-xs font-mono font-black text-rose-500">R$ {payload[1]?.value?.toLocaleString('pt-BR') || 0}</span>
                     </div>
                 </div>
             </div>
@@ -39,7 +38,7 @@ const CustomTooltip = ({ active, payload, label, theme }: any) => {
     return null;
 };
 
-export const FinanceTrendChart = React.memo(({ data, forceTheme }: FlowChartProps) => {
+export const FinanceTrendChart = React.memo(({ data = [], forceTheme }: FlowChartProps) => {
     const { theme: globalTheme } = useTheme();
     const theme = forceTheme || globalTheme;
     
@@ -69,12 +68,10 @@ export const FinanceTrendChart = React.memo(({ data, forceTheme }: FlowChartProp
     );
 });
 
-// --- 2. ANÁLISE DE CATEGORIAS (ORBITAL PIE) ---
-
 interface CategoryDataPoint {
     name: string;
-    value: number; // Percentual
-    amount: number; // Valor Real
+    value: number;
+    amount: number;
 }
 
 interface CategoryDistributionChartProps {
@@ -102,7 +99,7 @@ const renderActiveShape = (props: any) => {
     );
 };
 
-export const CategoryScientificChart = React.memo(({ data, mode, total, forceTheme }: CategoryDistributionChartProps) => {
+export const CategoryScientificChart = React.memo(({ data = [], mode, total, forceTheme }: CategoryDistributionChartProps) => {
     const { theme: globalTheme } = useTheme();
     const theme = forceTheme || globalTheme;
     const [activeIndex, setActiveIndex] = React.useState(0);
@@ -115,7 +112,7 @@ export const CategoryScientificChart = React.memo(({ data, mode, total, forceThe
 
     if (!data || data.length === 0) return (
         <div className="h-full flex items-center justify-center opacity-20">
-            <p className="text-xs font-black uppercase tracking-widest">Sem dados para análise orbital</p>
+            <p className="text-xs font-black uppercase tracking-widest">Aguardando telemetria...</p>
         </div>
     );
 
@@ -124,10 +121,7 @@ export const CategoryScientificChart = React.memo(({ data, mode, total, forceThe
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
                 <p className="text-[9px] font-black uppercase tracking-[0.4em] opacity-40 mb-1">Total</p>
                 <p className={`text-2xl font-black tracking-tighter ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(total)}
-                </p>
-                <p className={`text-[10px] font-bold mt-1 uppercase tracking-widest ${mode === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {mode === 'receita' ? 'Em Carteira' : 'Burn Rate'}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(total || 0)}
                 </p>
             </div>
 
@@ -159,8 +153,8 @@ export const CategoryScientificChart = React.memo(({ data, mode, total, forceThe
                                     <div className="p-4 bg-black/90 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-md">
                                         <p className="text-xs font-black text-white uppercase mb-1 tracking-widest">{d.name}</p>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-sm font-bold text-emerald-400">R$ {d.amount.toLocaleString('pt-BR')}</span>
-                                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white/10 text-white/60">{d.value.toFixed(1)}%</span>
+                                            <span className="text-sm font-bold text-emerald-400">R$ {d.amount?.toLocaleString('pt-BR') || 0}</span>
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white/10 text-white/60">{d.value?.toFixed(1) || 0}%</span>
                                         </div>
                                     </div>
                                 );

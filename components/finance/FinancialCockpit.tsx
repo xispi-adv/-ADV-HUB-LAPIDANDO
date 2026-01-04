@@ -14,7 +14,7 @@ const AI_TIPS = [
 ];
 
 const FinancialCockpit: React.FC<{ onRequestAuditor?: () => void }> = ({ onRequestAuditor }) => {
-  const { transactions, categories, accounts } = useFinance();
+  const { transactions = [], categories = [], accounts = [] } = useFinance();
   const { theme } = useTheme();
   const [currentTip, setCurrentTip] = useState(0);
   const [analysisMode, setAnalysisMode] = useState<'receita' | 'despesa'>('despesa');
