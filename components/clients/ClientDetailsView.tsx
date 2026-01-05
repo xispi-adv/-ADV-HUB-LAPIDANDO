@@ -5,13 +5,14 @@ import { useFinance } from '../../context/FinanceContext';
 import { useTaskManager } from '../../context/TaskManagerContext';
 import { useCalendar } from '../../context/CalendarContext';
 import { useClients } from '../../context/ClientContext';
+import { useTheme } from '../../context/ThemeContext';
 import TransactionModal from '../finance/TransactionModal';
 import ProjectModal from '../ProjectModal';
 import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
 import ClientActivityTimeline from './ClientActivityTimeline';
-import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock } from 'lucide-react';
+import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock, Calendar, PieChart, FileText, Target, Activity } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
@@ -41,9 +42,12 @@ interface ClientDetailsViewProps {
     setActiveView: (view: string) => void;
 }
 
+type ClientTab = 'calendar' | 'projects' | 'objectives' | 'profile' | 'history' | 'finance';
+
 const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, setActiveView }) => {
-    const [activeTab, setActiveTab] = useState<'profile' | 'finance' | 'projects' | 'calendar' | 'objectives' | 'history'>('profile');
+    const [activeTab, setActiveTab] = useState<ClientTab>('profile');
     const { updateClient } = useClients();
+    const { theme } = useTheme();
     
     // Modal States
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -156,13 +160,13 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
         });
     };
 
-    const tabs = [
-        { id: 'profile', label: 'Inteligência', icon: Icons.Check },
-        { id: 'objectives', label: 'Objetivos', icon: Icons.Target },
-        { id: 'history', label: 'Histórico', icon: Icons.Clock },
-        { id: 'finance', label: 'Financeiro', icon: Icons.Money },
-        { id: 'projects', label: 'Projetos', icon: Icons.Folder },
-        { id: 'calendar', label: 'Compromissos', icon: Icons.Calendar },
+    const menuItems: { id: ClientTab; label: string; icon: any }[] = [
+        { id: 'calendar', label: 'Compromissos', icon: Calendar },
+        { id: 'projects', label: 'Projetos', icon: Briefcase },
+        { id: 'objectives', label: 'Objetivos', icon: Target },
+        { id: 'profile', label: 'Inteligência', icon: Activity },
+        { id: 'history', label: 'Histórico', icon: Clock },
+        { id: 'finance', label: 'Financeiro', icon: PieChart },
     ];
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -196,386 +200,395 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     };
 
     return (
-        <div className="h-full flex flex-col animate-fade-in-up">
-            {/* Navigation Header */}
-            <div className="flex-shrink-0 mb-4">
-                <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group">
-                    <Icons.Back className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Contas</span>
-                </button>
-            </div>
+        <div className="h-full flex animate-fade-in-up overflow-hidden">
+            {/* Secondary Client Sidebar */}
+            <aside className={`w-16 lg:w-64 border-r border-[var(--border-color)] flex-shrink-0 flex flex-col py-8 transition-all duration-300
+                ${theme === 'light' ? 'bg-white' : 'bg-[#15161C]'}`}>
+                
+                {/* Back Link */}
+                <div className="px-6 mb-8">
+                    <button onClick={onBack} className="flex items-center gap-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group">
+                        <Icons.Back className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] hidden lg:inline">Voltar para Contas</span>
+                    </button>
+                </div>
 
-            {/* Client Header / Hero */}
-            <div className="flex-shrink-0 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[1.5rem] p-5 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl relative overflow-hidden">
-                <div className="flex items-center gap-5 relative z-10">
-                    <div className="relative group/logo">
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--bg-elevation-2)] to-[var(--bg-elevation-1)] border border-[var(--border-color)] flex items-center justify-center text-2xl font-bold text-[var(--text-secondary)] shadow-lg overflow-hidden">
-                            {client.logo ? <img src={client.logo} className="w-full h-full object-cover" /> : client.name.substring(0,1)}
-                        </div>
-                        <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute -bottom-1 -right-1 p-1.5 bg-[var(--accent-color)] text-white rounded-lg shadow-xl opacity-0 group-hover/logo:opacity-100 transition-all transform hover:scale-110 active:scale-95"
-                        >
-                            <Camera size={14} />
-                        </button>
-                        <input type="file" ref={fileInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
+                {/* Client Identity Summary */}
+                <div className="px-6 mb-10 flex flex-col items-center lg:items-start">
+                    <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-2xl bg-gradient-to-br from-[var(--bg-elevation-2)] to-[var(--bg-elevation-1)] border border-[var(--border-color)] flex items-center justify-center text-xl font-bold text-[var(--text-secondary)] shadow-lg overflow-hidden mb-4">
+                        {client.logo ? <img src={client.logo} className="w-full h-full object-cover" /> : client.name.substring(0,1)}
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter mb-0.5">{client.name}</h1>
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-[var(--text-muted)] font-medium">{client.companyName}</span>
-                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border ${client.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : client.status === 'PROSPECT' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/30'}`}>
-                                {client.status}
-                            </span>
-                        </div>
+                    <div className="hidden lg:block">
+                        <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tighter truncate w-48">{client.name}</h1>
+                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border mt-1 inline-block ${client.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : client.status === 'PROSPECT' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-gray-500/10 text-gray-500 border-gray-500/30'}`}>
+                            {client.status}
+                        </span>
                     </div>
                 </div>
-                
-                <div className="flex gap-1 bg-[var(--bg-elevation-1)] p-1 rounded-xl border border-[var(--border-color)] overflow-x-auto max-w-full">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
+
+                {/* Menu Items */}
+                <nav className="flex-1 overflow-y-auto space-y-1 px-3">
+                    <h3 className="px-3 mb-2 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider hidden lg:block">Navegação da Conta</h3>
+                    {menuItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = activeTab === item.id;
                         return (
                             <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={`
-                                    flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-300 whitespace-nowrap
+                                key={item.id}
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group
                                     ${isActive 
-                                        ? 'bg-[var(--accent-color)] text-white shadow-lg' 
-                                        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevation-2)] hover:text-[var(--text-primary)]'}
+                                        ? 'bg-[var(--bg-elevation-2)] text-[var(--text-primary)] shadow-sm border border-[var(--border-color)]' 
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevation-1)] border border-transparent'}
                                 `}
+                                title={item.label}
                             >
-                                <Icon className="w-4 h-4" />
-                                <span>{tab.label}</span>
+                                <Icon size={20} className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-105 opacity-60'}`} />
+                                <span className="text-sm font-bold hidden lg:inline">{item.label}</span>
                             </button>
-                        )
+                        );
                     })}
+                </nav>
+
+                {/* Account Settings Footer */}
+                <div className="px-3 mt-auto pt-6 border-t border-[var(--border-color)] opacity-40">
+                     <button className="w-full flex items-center gap-3 px-3 py-2 text-[var(--text-muted)] hover:text-white transition-colors">
+                        <Edit3 size={16}/>
+                        <span className="text-[10px] font-bold uppercase tracking-widest hidden lg:inline">Edit Core Data</span>
+                     </button>
                 </div>
-            </div>
+            </aside>
 
-            {/* Tab Content */}
-            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-10">
+            {/* Main Content Area */}
+            <main className="flex-1 min-h-0 flex flex-col overflow-y-auto bg-[var(--bg-main)] custom-scrollbar">
                 
-                {/* --- TAB: HISTÓRICO --- */}
-                {activeTab === 'history' && (
-                    <ClientActivityTimeline client={client} />
-                )}
+                {/* Minimal Top Header for Mobile/Title */}
+                <header className="p-6 lg:px-10 lg:py-8 border-b border-[var(--border-color)] bg-[var(--bg-card)]/50 backdrop-blur-md sticky top-0 z-40 flex justify-between items-center lg:hidden">
+                    <h2 className="text-lg font-bold text-white uppercase tracking-widest">{menuItems.find(i => i.id === activeTab)?.label}</h2>
+                </header>
 
-                {/* --- TAB 1: PERFIL / INTELIGÊNCIA --- */}
-                {activeTab === 'profile' && (
-                    <div className="space-y-12 animate-fade-in">
-                        <div className="flex justify-end">
-                            {isEditingProfile ? (
-                                <div className="flex gap-3">
-                                    <button onClick={handleCancelEdit} className="px-5 py-2.5 text-sm font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
-                                    <button onClick={handleSaveProfile} className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-[0.1em] flex items-center gap-3 shadow-lg transition-all transform active:scale-95">
-                                        <Icons.Save className="w-5 h-5" /> Salvar Alterações
-                                    </button>
-                                </div>
-                            ) : (
-                                <button onClick={() => setIsEditingProfile(true)} className="px-6 py-2.5 bg-[var(--bg-elevation-1)] hover:bg-[var(--bg-elevation-2)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-3 transition-all">
-                                    <Icons.Edit className="w-5 h-5" /> Iniciar Edição
-                                </button>
-                            )}
+                <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-20">
+                    {/* --- TAB: HISTÓRICO --- */}
+                    {activeTab === 'history' && (
+                        <div className="animate-fade-in">
+                            <ClientActivityTimeline client={client} />
                         </div>
+                    )}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 shadow-lg relative overflow-hidden">
-                                <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
-                                    <Icons.FingerPrint className="w-8 h-8 text-rose-500" />
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Metadados de Conta</h3>
+                    {/* --- TAB: PERFIL / INTELIGÊNCIA --- */}
+                    {activeTab === 'profile' && (
+                        <div className="space-y-12 animate-fade-in">
+                            <div className="flex justify-end">
+                                {isEditingProfile ? (
+                                    <div className="flex gap-3">
+                                        <button onClick={handleCancelEdit} className="px-5 py-2.5 text-sm font-black uppercase tracking-widest text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
+                                        <button onClick={handleSaveProfile} className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-black uppercase tracking-[0.1em] flex items-center gap-3 shadow-lg transition-all transform active:scale-95">
+                                            <Icons.Save className="w-5 h-5" /> Salvar Alterações
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => setIsEditingProfile(true)} className="px-6 py-2.5 bg-[var(--bg-elevation-1)] hover:bg-[var(--bg-elevation-2)] border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl text-sm font-black uppercase tracking-widest flex items-center gap-3 transition-all">
+                                        <Icons.Edit className="w-5 h-5" /> Iniciar Edição
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                <div className="lg:col-span-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 shadow-lg relative overflow-hidden">
+                                    <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
+                                        <Icons.FingerPrint className="w-8 h-8 text-rose-500" />
+                                        <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Metadados de Conta</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 relative z-10">
+                                        <ReadOnlyOrEdit label="Gestor do Contrato" value={editedClient.responsibleName} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, responsibleName: v})} />
+                                        <ReadOnlyOrEdit label="Registro Fiscal (CNPJ)" value={editedClient.cnpj} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, cnpj: v})} />
+                                        <ReadOnlyOrEdit label="Canal de Email Principal" value={editedClient.email} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, email: v})} icon={<Icons.Mail className="w-5 h-5" />} />
+                                        <ReadOnlyOrEdit label="Suporte Direto (Tel)" value={editedClient.phone} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, phone: v})} />
+                                        
+                                        <div className="md:col-span-2 pt-6">
+                                            <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-4 block opacity-50">Ecossistema Social & Web</label>
+                                            <div className="flex flex-wrap gap-5">
+                                                <SocialInput icon={<Icons.Globe />} placeholder="Website Oficial" value={editedClient.website} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, website: v})} />
+                                                <SocialInput icon={<Icons.Instagram />} placeholder="Instagram" value={editedClient.socialInstagram} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialInstagram: v})} />
+                                                <SocialInput icon={<Icons.Linkedin />} placeholder="LinkedIn" value={editedClient.socialLinkedin} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialLinkedin: v})} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 relative z-10">
-                                    <ReadOnlyOrEdit label="Gestor do Contrato" value={editedClient.responsibleName} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, responsibleName: v})} />
-                                    <ReadOnlyOrEdit label="Registro Fiscal (CNPJ)" value={editedClient.cnpj} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, cnpj: v})} />
-                                    <ReadOnlyOrEdit label="Canal de Email Principal" value={editedClient.email} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, email: v})} icon={<Icons.Mail className="w-5 h-5" />} />
-                                    <ReadOnlyOrEdit label="Suporte Direto (Tel)" value={editedClient.phone} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, phone: v})} />
+                                <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 flex flex-col shadow-lg">
+                                    <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
+                                        <div className="w-3 h-3 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]"></div>
+                                        <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Core Vision</h3>
+                                    </div>
                                     
-                                    <div className="md:col-span-2 pt-6">
-                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.3em] mb-4 block opacity-50">Ecossistema Social & Web</label>
-                                        <div className="flex flex-wrap gap-5">
-                                            <SocialInput icon={<Icons.Globe />} placeholder="Website Oficial" value={editedClient.website} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, website: v})} />
-                                            <SocialInput icon={<Icons.Instagram />} placeholder="Instagram" value={editedClient.socialInstagram} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialInstagram: v})} />
-                                            <SocialInput icon={<Icons.Linkedin />} placeholder="LinkedIn" value={editedClient.socialLinkedin} isEditing={isEditingProfile} onChange={(v) => setEditedClient({...editedClient, socialLinkedin: v})} />
+                                    <div className="space-y-10 flex-grow">
+                                        <div>
+                                            <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">North Star Metric</label>
+                                            {isEditingProfile ? (
+                                                <textarea 
+                                                    value={editedClient.contractObjective || ''}
+                                                    onChange={e => setEditedClient({...editedClient, contractObjective: e.target.value})}
+                                                    className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-32 transition-all font-medium shadow-inner"
+                                                    placeholder="Qual o principal KPI deste contrato?"
+                                                />
+                                            ) : (
+                                                <p className="text-xl font-medium text-[var(--text-primary)] leading-relaxed italic border-l-4 border-rose-500 pl-6 py-2 bg-rose-500/5 rounded-r-xl shadow-sm">
+                                                    "{editedClient.contractObjective || "Nenhum objetivo central definido."}"
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">Notas Estratégicas</label>
+                                            {isEditingProfile ? (
+                                                <textarea 
+                                                    value={editedClient.description || ''}
+                                                    onChange={e => setEditedClient({...editedClient, description: e.target.value})}
+                                                    className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-48 transition-all font-medium shadow-inner"
+                                                />
+                                            ) : (
+                                                <p className="text-base text-[var(--text-secondary)] leading-relaxed font-medium">
+                                                    {editedClient.description || "Aguardando definição de contexto operacional."}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-10 flex flex-col shadow-lg">
-                                <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
-                                    <div className="w-3 h-3 bg-rose-500 rounded-full animate-pulse shadow-[0_0_10px_#ef4444]"></div>
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Core Vision</h3>
+                            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2.5rem] p-10 shadow-lg">
+                                 <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
+                                    <Icons.Target className="w-8 h-8 text-blue-500" />
+                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Dossier de Onboarding (DNA)</h3>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                    <OnboardingSection label="Tom de Voz & Estilo" value={editedClient.brand?.toneOfVoice} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('toneOfVoice', v)} placeholder="Ex: Disruptivo, Sóbrio..." />
+                                    <OnboardingSection label="Universo Visual" value={editedClient.brand?.visualIdentity} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('visualIdentity', v)} placeholder="Manual de marca, fontes..." />
+                                    <OnboardingSection label="Missão & Propósito" value={editedClient.brand?.missionVision} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('missionVision', v)} placeholder="Onde a marca quer estar em 2 anos?" />
+                                    <OnboardingSection label="Benchmarking (Concorrentes)" value={editedClient.brand?.mainCompetitors} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('mainCompetitors', v)} placeholder="Quem são os rivais diretos?" />
+                                    <OnboardingSection label="Diferencial Competitive" value={editedClient.brand?.differentiation} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('differentiation', v)} placeholder="Por que o cliente escolhe você?" />
+                                    <OnboardingSection label="ICP (Persona Ideal)" value={editedClient.brand?.idealCustomerProfile} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('idealCustomerProfile', v)} placeholder="Perfil técnico do comprador..." />
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-8 border-b border-[var(--border-color)] pb-6">
+                                    <div className="flex items-center gap-4">
+                                        <Icons.Target className="w-8 h-8 text-emerald-500" />
+                                        <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Diretórios de Persona (Targeting)</h3>
+                                    </div>
+                                    <button 
+                                        onClick={() => setViewingPersonaIndex('new')}
+                                        className="flex items-center gap-2 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg active:scale-95"
+                                    >
+                                        <UserPlus size={16} />
+                                        <span>Nova Persona</span>
+                                    </button>
                                 </div>
                                 
-                                <div className="space-y-10 flex-grow">
-                                    <div>
-                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">North Star Metric</label>
-                                        {isEditingProfile ? (
-                                            <textarea 
-                                                value={editedClient.contractObjective || ''}
-                                                onChange={e => setEditedClient({...editedClient, contractObjective: e.target.value})}
-                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-32 transition-all font-medium shadow-inner"
-                                                placeholder="Qual o principal KPI deste contrato?"
-                                            />
-                                        ) : (
-                                            <p className="text-xl font-medium text-[var(--text-primary)] leading-relaxed italic border-l-4 border-rose-500 pl-6 py-2 bg-rose-500/5 rounded-r-xl shadow-sm">
-                                                "{editedClient.contractObjective || "Nenhum objetivo central definido."}"
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.4em] mb-4 block">Notas Estratégicas</label>
-                                        {isEditingProfile ? (
-                                            <textarea 
-                                                value={editedClient.description || ''}
-                                                onChange={e => setEditedClient({...editedClient, description: e.target.value})}
-                                                className="w-full bg-[var(--bg-elevation-1)] border border-[var(--border-color)] rounded-xl p-5 text-base text-[var(--text-primary)] focus:border-rose-500 outline-none resize-none h-48 transition-all font-medium shadow-inner"
-                                            />
-                                        ) : (
-                                            <p className="text-base text-[var(--text-secondary)] leading-relaxed font-medium">
-                                                {editedClient.description || "Aguardando definição de contexto operacional."}
-                                            </p>
-                                        )}
-                                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                    {editedClient.personas?.map((persona, index) => (
+                                        <PersonaCard 
+                                            key={index}
+                                            index={index}
+                                            data={persona}
+                                            onSelect={() => setViewingPersonaIndex(index)}
+                                        />
+                                    ))}
+                                    {(!editedClient.personas || editedClient.personas.length === 0) && (
+                                        <div className="col-span-full py-16 border-2 border-dashed border-[var(--border-color)] rounded-[2.5rem] flex flex-col items-center justify-center text-[var(--text-muted)] opacity-50">
+                                            <UserPlus size={32} className="mb-4" />
+                                            <p>Nenhuma persona mapeada para este cliente.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
+                    )}
 
-                        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2.5rem] p-10 shadow-lg">
-                             <div className="flex items-center gap-4 mb-10 border-b border-[var(--border-color)] pb-6">
-                                <Icons.Target className="w-8 h-8 text-blue-500" />
-                                <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Dossier de Onboarding (DNA)</h3>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                <OnboardingSection label="Tom de Voz & Estilo" value={editedClient.brand?.toneOfVoice} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('toneOfVoice', v)} placeholder="Ex: Disruptivo, Sóbrio..." />
-                                <OnboardingSection label="Universo Visual" value={editedClient.brand?.visualIdentity} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('visualIdentity', v)} placeholder="Manual de marca, fontes..." />
-                                <OnboardingSection label="Missão & Propósito" value={editedClient.brand?.missionVision} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('missionVision', v)} placeholder="Onde a marca quer estar em 2 anos?" />
-                                <OnboardingSection label="Benchmarking (Concorrentes)" value={editedClient.brand?.mainCompetitors} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('mainCompetitors', v)} placeholder="Quem são os rivais diretos?" />
-                                <OnboardingSection label="Diferencial Competitive" value={editedClient.brand?.differentiation} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('differentiation', v)} placeholder="Por que o cliente escolhe você?" />
-                                <OnboardingSection label="ICP (Persona Ideal)" value={editedClient.brand?.idealCustomerProfile} isEditing={isEditingProfile} onChange={(v) => handleBrandChange('idealCustomerProfile', v)} placeholder="Perfil técnico do comprador..." />
-                            </div>
+                    {/* --- TAB: OBJECTIVES --- */}
+                    {activeTab === 'objectives' && (
+                        <div className="animate-fade-in">
+                            <ClientObjectivesView client={client} />
                         </div>
+                    )}
 
-                        <div>
-                            <div className="flex items-center justify-between mb-8 border-b border-[var(--border-color)] pb-6">
-                                <div className="flex items-center gap-4">
-                                    <Icons.Target className="w-8 h-8 text-emerald-500" />
-                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight uppercase">Diretórios de Persona (Targeting)</h3>
+                    {/* --- TAB: FINANCE --- */}
+                    {activeTab === 'finance' && (
+                        <div className="animate-fade-in space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-emerald-500/50 transition-all">
+                                    <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Gross Revenue</p>
+                                    <div className="flex items-end justify-between">
+                                        <span className="text-4xl font-black text-emerald-500 tracking-tighter">{formatCurrency(financialSummary.income)}</span>
+                                        <div className="bg-emerald-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                                            <Icons.ArrowUp className="w-6 h-6 text-emerald-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-rose-500/50 transition-all">
+                                    <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Operative Cost</p>
+                                    <div className="flex items-end justify-between">
+                                        <span className="text-4xl font-black text-rose-500 tracking-tighter">{formatCurrency(financialSummary.expense)}</span>
+                                        <div className="bg-rose-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                                            <Icons.ArrowDown className="w-6 h-6 text-rose-500" />
+                                        </div>
+                                    </div>
                                 </div>
                                 <button 
-                                    onClick={() => setViewingPersonaIndex('new')}
-                                    className="flex items-center gap-2 bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg active:scale-95"
+                                    onClick={() => setIsTransactionModalOpen(true)}
+                                    className="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white rounded-[2rem] shadow-2xl shadow-[var(--accent-glow)] flex flex-col items-center justify-center gap-4 transition-all transform hover:-translate-y-1 active:scale-95 p-8"
                                 >
-                                    <UserPlus size={16} />
-                                    <span>Nova Persona</span>
+                                    <Icons.Plus className="w-10 h-10" />
+                                    <span className="font-black uppercase tracking-[0.2em] text-xs">Novo Lançamento</span>
+                                </button>
+                            </div>
+
+                            <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border-color)] overflow-hidden shadow-2xl">
+                                <div className="p-8 border-b border-[var(--border-color)] bg-[var(--bg-elevation-1)] flex justify-between items-center">
+                                    <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Extrato Analítico</h3>
+                                    <button 
+                                        onClick={handleDownloadStatement}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-[var(--bg-elevation-2)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-all shadow-sm"
+                                    >
+                                        <Download size={14} />
+                                        <span>Baixar Extrato</span>
+                                    </button>
+                                </div>
+                                <div className="divide-y divide-[var(--border-color)]">
+                                    {clientTransactions.length > 0 ? clientTransactions.map(t => (
+                                        <div key={t.id} className="flex items-center justify-between p-8 hover:bg-[var(--bg-elevation-1)] transition-all group">
+                                            <div className="flex items-center gap-6">
+                                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 flex-shrink-0 transition-all group-hover:scale-110 ${t.type === 'receita' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
+                                                    {t.type === 'receita' ? <Icons.ArrowUp className="w-6 h-6" /> : <Icons.ArrowDown className="w-6 h-6" />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{t.description}</p>
+                                                    <div className="flex items-center gap-4 mt-1.5">
+                                                        <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{new Date(t.date).toLocaleDateString()}</span>
+                                                        <span className={`px-2.5 py-1 rounded-full border text-[9px] uppercase font-black tracking-widest ${t.status === 'pago' ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/5' : 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5'}`}>
+                                                            {t.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span className={`text-2xl font-black tracking-tighter ${t.type === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                {t.type === 'receita' ? '+' : '-'}{formatCurrency(t.amount)}
+                                            </span>
+                                        </div>
+                                    )) : (
+                                        <div className="p-20 text-center text-[var(--text-muted)] bg-[var(--bg-elevation-1)]/30 flex flex-col items-center">
+                                            <ImageIcon className="w-16 h-16 mb-4 opacity-10" />
+                                            <p className="text-lg font-light italic">Sem lançamentos registrados para esta conta.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- TAB: PROJECTS --- */}
+                    {activeTab === 'projects' && (
+                        <div className="animate-fade-in flex flex-col gap-10">
+                            <div className="flex justify-between items-center bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] shadow-lg">
+                                <div>
+                                    <h3 className="text-2xl font-bold text-[var(--text-primary)] uppercase tracking-tight">Frentes de Entrega</h3>
+                                    <p className="text-sm text-[var(--text-muted)] font-medium mt-1">Sincronismo operacional por núcleos de inteligência.</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <button onClick={() => setIsGroupModalOpen(true)} className="flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--bg-elevation-1)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-rose-500/40 transition-all">
+                                        <Icons.Folder className="w-5 h-5 opacity-40" /> Novo Núcleo
+                                    </button>
+                                    <button onClick={() => setIsProjectModalOpen(true)} disabled={!hasGroups} className="flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] shadow-2xl shadow-[var(--accent-glow)] disabled:opacity-50 transition-all">
+                                        <Icons.Plus className="w-5 h-5" /> Nova Frente
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-16">
+                                {clientGroups.length > 0 ? clientGroups.map(group => {
+                                    const groupProjects = projects.filter(p => p.groupId === group.id);
+                                    return (
+                                        <section key={group.id} className="space-y-8">
+                                            <div className="flex items-center gap-4">
+                                                <div className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-2xl text-rose-500">
+                                                    <Layers size={24} strokeWidth={1.5} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter uppercase">{group.name}</h4>
+                                                    <p className="text-sm text-[var(--text-muted)] font-medium">{group.description || 'Núcleo de execução estratégica.'}</p>
+                                                </div>
+                                                <div className="flex-grow h-px bg-[var(--border-color)] opacity-20"></div>
+                                                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{groupProjects.length} PROJETOS</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                {groupProjects.length > 0 ? groupProjects.map(project => (
+                                                    <div key={project.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-8 hover:border-[var(--accent-color)] transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1 relative overflow-hidden">
+                                                        <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <ChevronRight size={24} className="text-rose-500" />
+                                                        </div>
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <span className="text-[10px] font-black bg-rose-500/10 px-3 py-1 rounded-full text-rose-500 uppercase tracking-widest border border-rose-500/10">{project.focus}</span>
+                                                            <span className="text-xs font-mono font-bold text-[var(--text-muted)]">{new Date(project.deadline).toLocaleDateString()}</span>
+                                                        </div>
+                                                        <h3 className="text-xl font-black text-[var(--text-primary)] mb-3 group-hover:text-rose-500 transition-colors tracking-tight">{project.name}</h3>
+                                                        <p className="text-sm text-[var(--text-secondary)] line-clamp-3 mb-8 leading-relaxed font-medium">{project.summary}</p>
+                                                        <button onClick={() => handleGoToProject(project.id)} className="w-full py-4 rounded-2xl bg-[var(--bg-elevation-1)] text-[var(--text-primary)] hover:bg-[var(--accent-color)] hover:text-white font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-[var(--border-color)]">
+                                                            Mapear Workboard
+                                                        </button>
+                                                    </div>
+                                                )) : (
+                                                    <div className="col-span-full py-12 border-2 border-dashed border-[var(--border-color)] rounded-[2.5rem] flex flex-col items-center justify-center text-[var(--text-muted)]">
+                                                        <Briefcase size={32} className="opacity-10 mb-3" />
+                                                        <p className="text-sm font-medium">Nenhum projeto ativo neste núcleo.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </section>
+                                    );
+                                }) : (
+                                    <div className="col-span-full text-center py-24 border-2 border-dashed border-[var(--border-color)] rounded-[3rem] text-[var(--text-muted)]">
+                                        <p className="text-lg font-light">Defina os núcleos operacionais para este cliente.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- TAB: CALENDAR --- */}
+                    {activeTab === 'calendar' && (
+                        <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border-color)] p-10 animate-fade-in shadow-lg">
+                            <div className="flex justify-between items-center mb-10 border-b border-[var(--border-color)] pb-6">
+                                <h3 className="text-2xl font-bold text-[var(--text-primary)] uppercase tracking-tight">Agenda Operacional</h3>
+                                <button onClick={() => setIsCalendarModalOpen(true)} className="flex items-center gap-3 bg-[var(--accent-color)] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--accent-glow)] transform active:scale-95 transition-all">
+                                    <Icons.Plus className="w-5 h-5" /> Agendar Evento
                                 </button>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {editedClient.personas?.map((persona, index) => (
-                                    <PersonaCard 
-                                        key={index}
-                                        index={index}
-                                        data={persona}
-                                        onSelect={() => setViewingPersonaIndex(index)}
-                                    />
-                                ))}
-                                {(!editedClient.personas || editedClient.personas.length === 0) && (
-                                    <div className="col-span-full py-16 border-2 border-dashed border-[var(--border-color)] rounded-[2.5rem] flex flex-col items-center justify-center text-[var(--text-muted)] opacity-50">
-                                        <UserPlus size={32} className="mb-4" />
-                                        <p>Nenhuma persona mapeada para este cliente.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* --- TAB 5: OBJECTIVES --- */}
-                {activeTab === 'objectives' && (
-                    <div className="animate-fade-in">
-                        <ClientObjectivesView client={client} />
-                    </div>
-                )}
-
-                {/* --- TAB 2: FINANCE --- */}
-                {activeTab === 'finance' && (
-                    <div className="animate-fade-in space-y-10">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-emerald-500/50 transition-all">
-                                <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Gross Revenue</p>
-                                <div className="flex items-end justify-between">
-                                    <span className="text-4xl font-black text-emerald-500 tracking-tighter">{formatCurrency(financialSummary.income)}</span>
-                                    <div className="bg-emerald-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
-                                        <Icons.ArrowUp className="w-6 h-6 text-emerald-500" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] flex flex-col justify-between shadow-xl group hover:border-rose-500/50 transition-all">
-                                <p className="text-xs text-[var(--text-muted)] uppercase font-black tracking-[0.3em] mb-4">Operative Cost</p>
-                                <div className="flex items-end justify-between">
-                                    <span className="text-4xl font-black text-rose-500 tracking-tighter">{formatCurrency(financialSummary.expense)}</span>
-                                    <div className="bg-rose-500/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
-                                        <Icons.ArrowDown className="w-6 h-6 text-rose-500" />
-                                    </div>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={() => setIsTransactionModalOpen(true)}
-                                className="bg-[var(--accent-color)] hover:bg-[var(--accent-hover)] text-white rounded-[2rem] shadow-2xl shadow-[var(--accent-glow)] flex flex-col items-center justify-center gap-4 transition-all transform hover:-translate-y-1 active:scale-95 p-8"
-                            >
-                                <Icons.Plus className="w-10 h-10" />
-                                <span className="font-black uppercase tracking-[0.2em] text-xs">Novo Lançamento</span>
-                            </button>
-                        </div>
-
-                        <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border-color)] overflow-hidden shadow-2xl">
-                            <div className="p-8 border-b border-[var(--border-color)] bg-[var(--bg-elevation-1)] flex justify-between items-center">
-                                <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">Extrato Analítico</h3>
-                                <button 
-                                    onClick={handleDownloadStatement}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-[var(--bg-elevation-2)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-secondary)] hover:text-[var(--accent-color)] transition-all shadow-sm"
-                                >
-                                    <Download size={14} />
-                                    <span>Baixar Extrato</span>
-                                </button>
-                            </div>
-                            <div className="divide-y divide-[var(--border-color)]">
-                                {clientTransactions.length > 0 ? clientTransactions.map(t => (
-                                    <div key={t.id} className="flex items-center justify-between p-8 hover:bg-[var(--bg-elevation-1)] transition-all group">
-                                        <div className="flex items-center gap-6">
-                                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 flex-shrink-0 transition-all group-hover:scale-110 ${t.type === 'receita' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-rose-500/10 border-rose-500/20 text-rose-500'}`}>
-                                                {t.type === 'receita' ? <Icons.ArrowUp className="w-6 h-6" /> : <Icons.ArrowDown className="w-6 h-6" />}
-                                            </div>
-                                            <div>
-                                                <p className="text-xl font-bold text-[var(--text-primary)] tracking-tight">{t.description}</p>
-                                                <div className="flex items-center gap-4 mt-1.5">
-                                                    <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{new Date(t.date).toLocaleDateString()}</span>
-                                                    <span className={`px-2.5 py-1 rounded-full border text-[9px] uppercase font-black tracking-widest ${t.status === 'pago' ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/5' : 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5'}`}>
-                                                        {t.status}
-                                                    </span>
-                                                </div>
-                                            </div>
+                            <div className="space-y-6">
+                                {clientEvents.length > 0 ? clientEvents.map(event => (
+                                    <div key={event.id} className="flex items-center gap-8 p-6 bg-[var(--bg-elevation-1)] rounded-3xl border border-[var(--border-color)] hover:border-indigo-500/50 transition-all cursor-pointer group">
+                                        <div className="flex flex-col items-center px-6 border-r border-[var(--border-color)] min-w-[100px]">
+                                            <span className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest">{new Date(event.dueDate).toLocaleString('pt-BR', { month: 'short' })}</span>
+                                            <span className="text-3xl font-black text-[var(--text-primary)]">{new Date(event.dueDate).getDate()}</span>
                                         </div>
-                                        <span className={`text-2xl font-black tracking-tighter ${t.type === 'receita' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                                            {t.type === 'receita' ? '+' : '-'}{formatCurrency(t.amount)}
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-xl font-bold text-[var(--text-primary)] truncate tracking-tight">{event.title}</h4>
+                                            <p className="text-sm text-[var(--text-secondary)] truncate font-medium mt-1">{event.description || "Sem detalhes adicionais."}</p>
+                                        </div>
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-2 ${event.status === 'CONCLUIDO' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' : 'bg-indigo-500/5 text-indigo-500 border-indigo-500/20'}`}>
+                                            {event.status}
                                         </span>
                                     </div>
-                                )) : (
-                                    <div className="p-20 text-center text-[var(--text-muted)] bg-[var(--bg-elevation-1)]/30 flex flex-col items-center">
-                                        <ImageIcon className="w-16 h-16 mb-4 opacity-10" />
-                                        <p className="text-lg font-light italic">Sem lançamentos registrados para esta conta.</p>
-                                    </div>
-                                )}
+                                )) : <div className="text-center py-20 text-[var(--text-muted)] text-lg font-light italic border-2 border-dashed border-[var(--border-color)] rounded-[3rem]">O cronograma operacional está livre.</div>}
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* --- TAB 3: PROJECTS --- */}
-                {activeTab === 'projects' && (
-                    <div className="animate-fade-in flex flex-col gap-10">
-                        <div className="flex justify-between items-center bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border-color)] shadow-lg">
-                            <div>
-                                <h3 className="text-2xl font-bold text-[var(--text-primary)] uppercase tracking-tight">Frentes de Entrega</h3>
-                                <p className="text-sm text-[var(--text-muted)] font-medium mt-1">Sincronismo operacional por núcleos de inteligência.</p>
-                            </div>
-                            <div className="flex gap-4">
-                                <button onClick={() => setIsGroupModalOpen(true)} className="flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--bg-elevation-1)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-rose-500/40 transition-all">
-                                    <Icons.Folder className="w-5 h-5 opacity-40" /> Novo Núcleo
-                                </button>
-                                <button onClick={() => setIsProjectModalOpen(true)} disabled={!hasGroups} className="flex items-center gap-3 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-wider bg-[var(--accent-color)] text-white hover:bg-[var(--accent-hover)] shadow-2xl shadow-[var(--accent-glow)] disabled:opacity-50 transition-all">
-                                    <Icons.Plus className="w-5 h-5" /> Nova Frente
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-16">
-                            {clientGroups.length > 0 ? clientGroups.map(group => {
-                                const groupProjects = projects.filter(p => p.groupId === group.id);
-                                return (
-                                    <section key={group.id} className="space-y-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-3 bg-rose-500/5 border border-rose-500/10 rounded-2xl text-rose-500">
-                                                <Layers size={24} strokeWidth={1.5} />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter uppercase">{group.name}</h4>
-                                                <p className="text-sm text-[var(--text-muted)] font-medium">{group.description || 'Núcleo de execução estratégica.'}</p>
-                                            </div>
-                                            <div className="flex-grow h-px bg-[var(--border-color)] opacity-20"></div>
-                                            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">{groupProjects.length} PROJETOS</span>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                            {groupProjects.length > 0 ? groupProjects.map(project => (
-                                                <div key={project.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[2rem] p-8 hover:border-[var(--accent-color)] transition-all group shadow-sm hover:shadow-xl hover:-translate-y-1 relative overflow-hidden">
-                                                    <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <ChevronRight size={24} className="text-rose-500" />
-                                                    </div>
-                                                    <div className="flex justify-between items-start mb-6">
-                                                        <span className="text-[10px] font-black bg-rose-500/10 px-3 py-1 rounded-full text-rose-500 uppercase tracking-widest border border-rose-500/10">{project.focus}</span>
-                                                        <span className="text-xs font-mono font-bold text-[var(--text-muted)]">{new Date(project.deadline).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <h3 className="text-xl font-black text-[var(--text-primary)] mb-3 group-hover:text-rose-500 transition-colors tracking-tight">{project.name}</h3>
-                                                    <p className="text-sm text-[var(--text-secondary)] line-clamp-3 mb-8 leading-relaxed font-medium">{project.summary}</p>
-                                                    <button onClick={() => handleGoToProject(project.id)} className="w-full py-4 rounded-2xl bg-[var(--bg-elevation-1)] text-[var(--text-primary)] hover:bg-[var(--accent-color)] hover:text-white font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-[var(--border-color)]">
-                                                        Mapear Workboard
-                                                    </button>
-                                                </div>
-                                            )) : (
-                                                <div className="col-span-full py-12 border-2 border-dashed border-[var(--border-color)] rounded-[2.5rem] flex flex-col items-center justify-center text-[var(--text-muted)]">
-                                                    <Briefcase size={32} className="opacity-10 mb-3" />
-                                                    <p className="text-sm font-medium">Nenhum projeto ativo neste núcleo.</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </section>
-                                );
-                            }) : (
-                                <div className="col-span-full text-center py-24 border-2 border-dashed border-[var(--border-color)] rounded-[3rem] text-[var(--text-muted)]">
-                                    <p className="text-lg font-light">Defina os núcleos operacionais para este cliente.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* --- TAB 4: CALENDAR --- */}
-                {activeTab === 'calendar' && (
-                    <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border-color)] p-10 animate-fade-in shadow-lg">
-                        <div className="flex justify-between items-center mb-10 border-b border-[var(--border-color)] pb-6">
-                            <h3 className="text-2xl font-bold text-[var(--text-primary)] uppercase tracking-tight">Agenda Operacional</h3>
-                            <button onClick={() => setIsCalendarModalOpen(true)} className="flex items-center gap-3 bg-[var(--accent-color)] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-[var(--accent-glow)] transform active:scale-95 transition-all">
-                                <Icons.Plus className="w-5 h-5" /> Agendar Evento
-                            </button>
-                        </div>
-                        
-                        <div className="space-y-6">
-                            {clientEvents.length > 0 ? clientEvents.map(event => (
-                                <div key={event.id} className="flex items-center gap-8 p-6 bg-[var(--bg-elevation-1)] rounded-3xl border border-[var(--border-color)] hover:border-indigo-500/50 transition-all cursor-pointer group">
-                                    <div className="flex flex-col items-center px-6 border-r border-[var(--border-color)] min-w-[100px]">
-                                        <span className="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest">{new Date(event.dueDate).toLocaleString('pt-BR', { month: 'short' })}</span>
-                                        <span className="text-3xl font-black text-[var(--text-primary)]">{new Date(event.dueDate).getDate()}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-xl font-bold text-[var(--text-primary)] truncate tracking-tight">{event.title}</h4>
-                                        <p className="text-sm text-[var(--text-secondary)] truncate font-medium mt-1">{event.description || "Sem detalhes adicionais."}</p>
-                                    </div>
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-2 ${event.status === 'CONCLUIDO' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20' : 'bg-indigo-500/5 text-indigo-500 border-indigo-500/20'}`}>
-                                        {event.status}
-                                    </span>
-                                </div>
-                            )) : <div className="text-center py-20 text-[var(--text-muted)] text-lg font-light italic border-2 border-dashed border-[var(--border-color)] rounded-[3rem]">O cronograma operacional está livre.</div>}
-                        </div>
-                    </div>
-                )}
-
-            </div>
+                    )}
+                </div>
+            </main>
             
             {/* Modals */}
             {isTransactionModalOpen && <TransactionModal onClose={() => setIsTransactionModalOpen(false)} defaultClientId={client.id} />}

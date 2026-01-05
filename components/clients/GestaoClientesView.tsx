@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useClients } from '../../context/ClientContext';
 import { useTheme } from '../../context/ThemeContext';
 import type { Client, ClientStatus } from '../../types';
@@ -144,12 +144,23 @@ const ClientColumn: React.FC<ClientColumnProps> = ({ title, status, clients, onS
     );
 }
 
-const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = ({ setActiveView }) => {
+const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void, onSidebarCollapse?: (collapsed: boolean) => void }> = ({ setActiveView, onSidebarCollapse }) => {
     const { clients } = useClients();
     const { theme } = useTheme();
     const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        if (selectedClientId && onSidebarCollapse) {
+            onSidebarCollapse(true);
+        }
+    }, [selectedClientId, onSidebarCollapse]);
+
+    const handleBackFromDetails = () => {
+        setSelectedClientId(null);
+        if (onSidebarCollapse) onSidebarCollapse(false);
+    };
 
     const filteredClients = useMemo(() => {
         if (!searchQuery) return clients;
@@ -164,7 +175,7 @@ const GestaoClientesView: React.FC<{ setActiveView: (view: string) => void }> = 
     const selectedClient = useMemo(() => clients.find(c => c.id === selectedClientId) || null, [clients, selectedClientId]);
 
     if (selectedClient) {
-        return <ClientDetailsView client={selectedClient} onBack={() => setSelectedClientId(null)} setActiveView={setActiveView} />;
+        return <ClientDetailsView client={selectedClient} onBack={handleBackFromDetails} setActiveView={setActiveView} />;
     }
 
     return (

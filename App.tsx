@@ -60,7 +60,7 @@ const AppContent: React.FC = () => {
       case 'Meus Agents': return <MeusAgentsView initialAgentId={navParams?.agentId} initialGroupId={navParams?.groupId} />;
       case 'E-mail': return <EmailCentralView />;
       case 'Financeiro': return <FinanceiroView initialTab={navParams?.tab} />;
-      case 'Gestão de clientes': return <GestaoClientesView setActiveView={handleNavigate} />;
+      case 'Gestão de clientes': return <GestaoClientesView setActiveView={handleNavigate} onSidebarCollapse={setIsSidebarCollapsed} />;
       case 'Tarefas': return <TarefasView />;
       case 'Meus Projetos': return <MeusProjetosView setActiveView={handleNavigate} />;
       case 'AI Playground': return <AIPlaygroundView initialTool={navParams?.tool} initialTab={navParams?.tab} />;
