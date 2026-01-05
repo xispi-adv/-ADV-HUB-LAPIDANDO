@@ -12,7 +12,8 @@ import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
 import ClientActivityTimeline from './ClientActivityTimeline';
-import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock, Calendar, PieChart, FileText, Target, Activity } from 'lucide-react';
+import ClientHealthMonitor from './ClientHealthMonitor';
+import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock, Calendar, PieChart, FileText, Target, Activity, HeartPulse } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
@@ -42,7 +43,7 @@ interface ClientDetailsViewProps {
     setActiveView: (view: string) => void;
 }
 
-type ClientTab = 'calendar' | 'projects' | 'objectives' | 'profile' | 'history' | 'finance';
+type ClientTab = 'calendar' | 'projects' | 'objectives' | 'profile' | 'history' | 'finance' | 'health';
 
 const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, setActiveView }) => {
     const [activeTab, setActiveTab] = useState<ClientTab>('profile');
@@ -167,6 +168,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
         { id: 'profile', label: 'Inteligência', icon: Activity },
         { id: 'history', label: 'Histórico', icon: Clock },
         { id: 'finance', label: 'Financeiro', icon: PieChart },
+        { id: 'health', label: 'Saúde & Score', icon: HeartPulse },
     ];
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -272,6 +274,13 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                     {activeTab === 'history' && (
                         <div className="animate-fade-in">
                             <ClientActivityTimeline client={client} />
+                        </div>
+                    )}
+
+                    {/* --- TAB: HEALTH MONITOR --- */}
+                    {activeTab === 'health' && (
+                        <div className="animate-fade-in">
+                            <ClientHealthMonitor client={client} />
                         </div>
                     )}
 
