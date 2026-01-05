@@ -65,6 +65,23 @@ export interface ClientObjective {
     keyResults: ClientKeyResult[];
 }
 
+export type ActivityType = 'MEETING' | 'CALL' | 'COMPLAINT' | 'NOTE' | 'INCIDENT';
+
+export interface ClientActivity {
+  id: string;
+  clientId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  dateOccurred: string;
+  createdAt: string;
+  isPinned?: boolean;
+  attachments?: string[];
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -83,6 +100,7 @@ export interface Client {
   brand?: ClientBrand;
   personas?: ClientPersona[];
   objectives?: ClientObjective[];
+  activities?: ClientActivity[];
   onboardingChecklist?: { id: string; label: string; completed: boolean }[];
   since: string;
 }

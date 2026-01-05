@@ -10,12 +10,13 @@ import ProjectModal from '../ProjectModal';
 import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
-import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X } from 'lucide-react';
+import ClientActivityTimeline from './ClientActivityTimeline';
+import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
     Back: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>,
-    Folder: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>,
+    Folder: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5(1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>,
     Money: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     Calendar: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
     Check: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -30,7 +31,8 @@ const Icons = {
     Mail: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>,
     Target: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>,
     FingerPrint: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 6"></path><path d="M5 15.1a7 7 0 0 0 10.9 0"></path><path d="M8.2 8.5a4 4 0 0 1 7.6 0"></path><path d="M12 12v.1"></path><path d="M16 16v.1"></path><path d="M8 16v.1"></path></svg>,
-    Close: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+    Close: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
+    Clock: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
 };
 
 interface ClientDetailsViewProps {
@@ -40,7 +42,7 @@ interface ClientDetailsViewProps {
 }
 
 const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, setActiveView }) => {
-    const [activeTab, setActiveTab] = useState<'profile' | 'finance' | 'projects' | 'calendar' | 'objectives'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'finance' | 'projects' | 'calendar' | 'objectives' | 'history'>('profile');
     const { updateClient } = useClients();
     
     // Modal States
@@ -157,6 +159,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     const tabs = [
         { id: 'profile', label: 'Inteligência', icon: Icons.Check },
         { id: 'objectives', label: 'Objetivos', icon: Icons.Target },
+        { id: 'history', label: 'Histórico', icon: Icons.Clock },
         { id: 'finance', label: 'Financeiro', icon: Icons.Money },
         { id: 'projects', label: 'Projetos', icon: Icons.Folder },
         { id: 'calendar', label: 'Compromissos', icon: Icons.Calendar },
@@ -254,6 +257,11 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
             {/* Tab Content */}
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-10">
                 
+                {/* --- TAB: HISTÓRICO --- */}
+                {activeTab === 'history' && (
+                    <ClientActivityTimeline client={client} />
+                )}
+
                 {/* --- TAB 1: PERFIL / INTELIGÊNCIA --- */}
                 {activeTab === 'profile' && (
                     <div className="space-y-12 animate-fade-in">
