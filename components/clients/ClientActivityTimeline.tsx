@@ -72,11 +72,46 @@ const MOCK_ACTIVITIES: ClientActivity[] = [
 ];
 
 const TYPE_CONFIG = {
-    MEETING: { label: 'Reunião', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-500' },
-    CALL: { label: 'Chamado', icon: Phone, color: 'text-emerald-500', bg: 'bg-emerald-500' },
-    COMPLAINT: { label: 'Reclamação', icon: AlertTriangle, color: 'text-orange-500', bg: 'bg-orange-500' },
-    NOTE: { label: 'Pontuamento', icon: FileText, color: 'text-slate-500', bg: 'bg-slate-500' },
-    INCIDENT: { label: 'Incidente', icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-600' },
+    MEETING: { 
+        label: 'Reunião', 
+        icon: Calendar, 
+        color: 'text-blue-500', 
+        bg: 'bg-blue-600', 
+        border: 'border-blue-500/30', 
+        glass: 'bg-blue-500/5' 
+    },
+    CALL: { 
+        label: 'Chamado', 
+        icon: Phone, 
+        color: 'text-emerald-500', 
+        bg: 'bg-emerald-600', 
+        border: 'border-emerald-500/30', 
+        glass: 'bg-emerald-500/5' 
+    },
+    COMPLAINT: { 
+        label: 'Reclamação', 
+        icon: AlertTriangle, 
+        color: 'text-orange-500', 
+        bg: 'bg-orange-600', 
+        border: 'border-orange-500/40', 
+        glass: 'bg-orange-500/10' 
+    },
+    NOTE: { 
+        label: 'Pontuamento', 
+        icon: FileText, 
+        color: 'text-slate-400', 
+        bg: 'bg-slate-600', 
+        border: 'border-slate-500/20', 
+        glass: 'bg-slate-500/5' 
+    },
+    INCIDENT: { 
+        label: 'Incidente', 
+        icon: XCircle, 
+        color: 'text-rose-500', 
+        bg: 'bg-rose-600', 
+        border: 'border-rose-500/50', 
+        glass: 'bg-rose-500/10' 
+    },
 };
 
 const ClientActivityTimeline: React.FC<{ client: Client }> = ({ client }) => {
@@ -102,7 +137,7 @@ const ClientActivityTimeline: React.FC<{ client: Client }> = ({ client }) => {
         <div className="flex flex-col h-full animate-fade-in">
             {/* TOOLBAR */}
             <div className={`
-                sticky top-0 z-20 flex flex-col md:flex-row gap-4 p-5 border-b mb-8 backdrop-blur-md rounded-2xl shadow-sm
+                sticky top-0 z-20 flex flex-col md:flex-row gap-4 p-5 border-b mb-12 backdrop-blur-md rounded-2xl shadow-sm
                 ${theme === 'light' ? 'bg-white/80 border-slate-200' : 'bg-[#0F1014]/80 border-white/5'}
             `}>
                 <div className="relative flex-1 group">
@@ -182,7 +217,6 @@ const ClientActivityTimeline: React.FC<{ client: Client }> = ({ client }) => {
                         <TimelineItem key={act.id} activity={act} index={index} />
                     )) : (
                         <div className="py-20 text-center opacity-20">
-                            {/* FIX: Clock icon was used without being imported from lucide-react */}
                             <Clock size={48} className="mx-auto mb-4" />
                             <p className="text-xl font-black uppercase tracking-widest">Nenhuma atividade registrada</p>
                         </div>
@@ -201,25 +235,25 @@ const TimelineItem: React.FC<{ activity: ClientActivity; index: number }> = ({ a
     const config = TYPE_CONFIG[activity.type];
     const Icon = config.icon;
     
-    const isCritical = activity.type === 'INCIDENT' || activity.type === 'COMPLAINT';
-
     return (
         <div className="relative group animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
-            {/* Node */}
+            {/* Node - Now with solid background preenchimento (Requirement 1.1) */}
             <div className={`
-                absolute -left-12 md:-left-20 top-2 w-8 h-8 rounded-full border-4 flex items-center justify-center z-10 transition-all duration-500 shadow-xl
-                ${theme === 'light' ? 'bg-white border-slate-50' : 'bg-[#0F1014] border-[#0F1014] group-hover:scale-110'}
-                ${config.color}
+                absolute -left-12 md:-left-21 top-3 w-10 h-10 rounded-full flex items-center justify-center z-10 transition-all duration-500 shadow-2xl border-4
+                ${theme === 'light' ? 'border-white' : 'border-[#0F1014]'}
+                ${config.bg}
             `}>
-                <Icon size={14} strokeWidth={3} />
+                <Icon size={16} strokeWidth={3} className="text-white" />
             </div>
 
-            {/* Card */}
+            {/* Card - Glassmorphism + Pertinent Border + BG (Requirements 1.2 & 1.3) */}
             <div className={`
-                relative p-7 rounded-[2rem] border-2 transition-all duration-500
-                ${theme === 'light' ? 'bg-white border-slate-100 shadow-sm' : 'bg-[#1A1B23] border-white/5'}
-                ${isCritical ? (theme === 'light' ? 'border-l-rose-500 shadow-rose-100' : 'border-l-rose-500/50 shadow-[0_0_30px_rgba(244,63,94,0.03)]') : 'hover:border-white/10'}
-                hover:-translate-y-1 hover:shadow-2xl
+                relative p-8 rounded-[2.5rem] border backdrop-blur-xl transition-all duration-500
+                ${theme === 'light' 
+                    ? `bg-white/80 border-slate-200 shadow-sm ${config.border} hover:bg-white` 
+                    : `${config.glass} ${config.border} hover:bg-white/[0.05]`
+                }
+                hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/20
             `}>
                 {activity.isPinned && (
                     <div className="absolute top-0 right-10 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1 bg-amber-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg">
@@ -227,19 +261,24 @@ const TimelineItem: React.FC<{ activity: ClientActivity; index: number }> = ({ a
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5">
-                    <div className="flex items-center gap-3">
-                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-widest border ${config.color.replace('text-', 'bg-')}/10 ${config.color} border-current/20`}>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6">
+                    <div className="flex items-center gap-4">
+                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${config.color.replace('text-', 'bg-')}/10 ${config.color} border-current/20`}>
                             {config.label}
                         </span>
-                        <h4 className={`text-lg font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{activity.title}</h4>
+                        <h4 className={`text-xl font-black tracking-tight ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>{activity.title}</h4>
                     </div>
+                    
+                    {/* Date Info - More visible color (Requirement 1.4) */}
                     <div className="flex items-center gap-4">
-                        <time className={`text-[10px] font-bold font-mono uppercase ${theme === 'light' ? 'text-slate-400' : 'text-white/20'}`}>
+                        <div className={`flex items-center gap-2 text-[10px] font-black font-mono uppercase ${theme === 'light' ? 'text-slate-600' : 'text-white/70'}`}>
+                            <Calendar size={12} className={config.color} />
                             {format(new Date(activity.dateOccurred), "dd 'de' MMM, yyyy", { locale: ptBR })} 
-                            <span className="mx-2 opacity-50">•</span>
-                            {formatDistanceToNow(new Date(activity.dateOccurred), { addSuffix: true, locale: ptBR })}
-                        </time>
+                            <span className={`mx-2 opacity-30 ${theme === 'light' ? 'text-slate-900' : 'text-white'}`}>|</span>
+                            <span className={theme === 'light' ? 'text-slate-900' : 'text-white'}>
+                                {formatDistanceToNow(new Date(activity.dateOccurred), { addSuffix: true, locale: ptBR })}
+                            </span>
+                        </div>
                         <button className={`p-1.5 rounded-lg hover:bg-white/5 transition-colors ${theme === 'light' ? 'text-slate-300' : 'text-white/10'}`}>
                             <MoreVertical size={16} />
                         </button>
@@ -247,36 +286,41 @@ const TimelineItem: React.FC<{ activity: ClientActivity; index: number }> = ({ a
                 </div>
 
                 <div className={`relative ${!isExpanded && 'max-h-24 overflow-hidden'}`}>
-                    <p className={`text-sm leading-relaxed font-medium transition-colors ${theme === 'light' ? 'text-slate-600' : 'text-[var(--text-secondary)]'}`}>
+                    <p className={`text-base leading-relaxed font-medium transition-colors ${theme === 'light' ? 'text-slate-600' : 'text-[var(--text-secondary)]'}`}>
                         {activity.description}
                     </p>
                     {!isExpanded && activity.description.length > 200 && (
-                        <div className={`absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t ${theme === 'light' ? 'from-white' : 'from-[#1A1B23]'} to-transparent`}></div>
+                        <div className={`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t ${theme === 'light' ? 'from-white/90' : 'from-black/10'} to-transparent`}></div>
                     )}
                 </div>
 
                 {activity.description.length > 200 && (
                     <button 
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className={`mt-4 text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:underline ${theme === 'light' ? 'text-blue-600' : 'text-rose-500'}`}
+                        className={`mt-6 text-[10px] font-black uppercase tracking-[0.2em] transition-colors hover:underline ${theme === 'light' ? 'text-blue-600' : 'text-rose-500'}`}
                     >
-                        {isExpanded ? 'Ver menos' : 'Expandir registro completo'}
+                        {isExpanded ? 'Ocultar Relatório' : 'Expandir Registro Completo'}
                     </button>
                 )}
 
-                <div className="mt-8 pt-5 border-t border-white/5 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <div className={`w-6 h-6 rounded-full border border-white/10 bg-[var(--bg-elevation-2)] flex items-center justify-center text-[10px] font-bold text-[var(--text-primary)] shadow-sm`}>
+                <div className="mt-10 pt-6 border-t border-white/5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-xl border border-white/10 ${config.bg} flex items-center justify-center text-xs font-black text-white shadow-sm`}>
                             {activity.authorName.charAt(0)}
                         </div>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${theme === 'light' ? 'text-slate-400' : 'text-white/30'}`}>
-                            Registrado por {activity.authorName}
-                        </span>
+                        <div className="flex flex-col">
+                            <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${theme === 'light' ? 'text-slate-400' : 'text-white/30'}`}>
+                                Autor do Log
+                            </span>
+                            <span className={`text-xs font-bold ${theme === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                                {activity.authorName}
+                            </span>
+                        </div>
                     </div>
                     <div className="flex gap-2">
                         {activity.attachments && activity.attachments.length > 0 && (
-                             <span className="text-[9px] font-black uppercase text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded border border-blue-400/20">
-                                {activity.attachments.length} ANEXOS
+                             <span className="text-[10px] font-black uppercase text-blue-400 bg-blue-400/10 px-3 py-1 rounded-lg border border-blue-400/20 flex items-center gap-2">
+                                <Plus size={12} /> {activity.attachments.length} ARQUIVOS_ANEXOS
                             </span>
                         )}
                     </div>
