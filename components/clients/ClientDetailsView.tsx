@@ -12,13 +12,13 @@ import ProjectGroupModal from '../ProjectGroupModal';
 import CalendarTaskModal from '../calendar/CalendarTaskModal';
 import ClientObjectivesView from './ClientObjectivesView';
 import ClientActivityTimeline from './ClientActivityTimeline';
-import ClientHealthMonitor from './ClientHealthMonitor';
+import VitalityDashboard from './VitalityDashboard';
 import { Camera, Image as ImageIcon, Layers, Briefcase, ChevronRight, Download, Trash2, Plus, UserPlus, Edit3, X, Clock, Calendar, PieChart, FileText, Target, Activity, HeartPulse } from 'lucide-react';
 
 // --- ICONS ---
 const Icons = {
     Back: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>,
-    Folder: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5(1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>,
+    Folder: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>,
     Money: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     Calendar: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
     Check: (props: any) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -43,7 +43,7 @@ interface ClientDetailsViewProps {
     setActiveView: (view: string) => void;
 }
 
-type ClientTab = 'calendar' | 'projects' | 'objectives' | 'profile' | 'history' | 'finance' | 'health';
+type ClientTab = 'calendar' | 'projects' | 'objectives' | 'profile' | 'history' | 'finance' | 'vitality';
 
 const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, setActiveView }) => {
     const [activeTab, setActiveTab] = useState<ClientTab>('profile');
@@ -67,7 +67,7 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
         setEditedClient(client);
     }, [client]);
 
-    const { projectGroups, projects, selectProject } = useTaskManager();
+    const { projectGroups, projects, selectProject, tasks } = useTaskManager();
     const { transactions, categories } = useFinance();
     const { tasks: calendarTasks } = useCalendar();
 
@@ -162,13 +162,13 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
     };
 
     const menuItems: { id: ClientTab; label: string; icon: any }[] = [
+        { id: 'vitality', label: 'Vitality Pulse', icon: HeartPulse },
         { id: 'calendar', label: 'Compromissos', icon: Calendar },
         { id: 'projects', label: 'Projetos', icon: Briefcase },
         { id: 'objectives', label: 'Objetivos', icon: Target },
         { id: 'profile', label: 'Inteligência', icon: Activity },
         { id: 'history', label: 'Histórico', icon: Clock },
         { id: 'finance', label: 'Financeiro', icon: PieChart },
-        { id: 'health', label: 'Saúde & Score', icon: HeartPulse },
     ];
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -270,17 +270,18 @@ const ClientDetailsView: React.FC<ClientDetailsViewProps> = ({ client, onBack, s
                 </header>
 
                 <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full pb-20">
+                    
+                    {/* --- TAB: VITALITY PULSE --- */}
+                    {activeTab === 'vitality' && (
+                        <div className="animate-fade-in">
+                            <VitalityDashboard client={client} tasks={tasks} />
+                        </div>
+                    )}
+
                     {/* --- TAB: HISTÓRICO --- */}
                     {activeTab === 'history' && (
                         <div className="animate-fade-in">
                             <ClientActivityTimeline client={client} />
-                        </div>
-                    )}
-
-                    {/* --- TAB: HEALTH MONITOR --- */}
-                    {activeTab === 'health' && (
-                        <div className="animate-fade-in">
-                            <ClientHealthMonitor client={client} />
                         </div>
                     )}
 
